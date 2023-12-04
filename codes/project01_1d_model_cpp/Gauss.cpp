@@ -3,8 +3,10 @@
 
 
 
+
 int Gauss(int N, int a, int b)
 {
+    long double PI = 3.14159265358979323846264338327950288419716939937510582;
     N = N - 1;
     int N1 = 0, N2 = 0;
     
@@ -27,24 +29,24 @@ int Gauss(int N, int a, int b)
     {
         lin[ii] =  ii;
     }
-    
-    
 
+    // Initial guess
+    double y[N1];
     for (int ii = 0; ii < N1; ++ii)
     {
-        std::cout << "lin[" << ii << "] = " << lin[ii] << std::endl;
+        y[ii] = cos((2*lin[ii] + 1) * PI / (2 * N + 2)) + (0.27 / N1) * sin(PI * xu[ii] * N / N2);
     }
 
-    for (int ii = 0; ii < N1; ++ii)
+     for (int ii = 0; ii < N1; ++ii)
     {
-        std::cout << "xu[" << ii << "] = " << xu[ii] << std::endl; 
+        std::cout << "y[" << ii << "] = " << y[ii] << std::endl;
     }
 
     return 0;
 
-    // // Initial guess
-    // double y[N1];
-    // y = cos( (2 * lin) )
+   
+
+    
 
 }
 
