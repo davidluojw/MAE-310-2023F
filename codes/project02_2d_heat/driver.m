@@ -9,11 +9,17 @@ exact_y = @(x,y) x*(1-x)*(1-2*y);
 
 f = @(x,y) -2*x*(x-1)-2*y*(y-1);
 
+% quadrature rule
+n_int_xi  = 3;
+n_int_eta = 3;
+n_int     = n_int_xi * n_int_eta;
+[xi, eta, weight] = Gauss2D(n_int_xi, n_int_eta);
+
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 2;               % number of element in x-direction
-n_el_y = 3;               % number of element in y-direction
+n_el_x = 100;               % number of element in x-direction
+n_el_y = 100;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -53,13 +59,100 @@ for ey = 1 : n_el_y
   end
 end
 
+% ID array
+ID = zeros(n_np, 1);
+counter = 1;
+for ny = 2 : n_np_y-1
+  for nx = 2 : n_np_x-1
+    ID( (ny-1)*n_np_x + nx ) = counter;
+    counter = counter + 1;
+  end
+end
 
+n_eq = n_np - n_np_x * 2 - n_np_y * 2 + 4;
 
+LM = ID(IEN);
 
+% Start the assembly procedure
+K = zeros(n_eq, n_eq);
+F = zeros(n_eq, 1);
 
+for ee = 1 : n_el
+   k_ele = zeros(n_en, n_en);
+   f_ele = zeros(n_en, 1);
 
+   x_ele = zeros(n_en, 1);
+   y_ele = x_ele;
+   for aa = 1 : n_en
+     x_ele(aa) = x_coor( IEN(aa,ee) );
+     y_ele(aa) = y_coor( IEN(aa,ee) );
+   end
 
+   % loop over quadrature points   
+   for ll = 1 : n_int
+     x_l = 0.0; y_l = 0.0;
+     dx_dxi = 0.0; dx_deta = 0.0;
+     dy_dxi = 0.0; dy_deta = 0.0;
+     for aa = 1 : n_en
+        x_l = x_l + x_ele(aa) * Quad(aa, xi(ll), eta(ll));
+        y_l = y_l + y_ele(aa) * Quad(aa, xi(ll), eta(ll));
+        [Na_xi, Na_eta] = Quad_grad(aa, xi(ll), eta(ll));
+        dx_dxi  = dx_dxi  + x_ele(aa) * Na_xi;
+        dx_deta = dx_deta + x_ele(aa) * Na_eta;
+        dy_dxi  = dy_dxi  + y_ele(aa) * Na_xi;
+        dy_deta = dy_deta + y_ele(aa) * Na_eta;
+     end
 
+     detJ = dx_dxi * dy_deta - dx_deta * dy_dxi;
+
+     for aa = 1 : n_en
+       [Na_xi, Na_eta] = Quad_grad(aa, xi(ll), eta(ll));
+       Na_x = (Na_xi * dy_deta    - Na_eta * dy_dxi) / detJ;
+       Na_y = (Na_xi * (-dx_deta) + Na_eta * dx_dxi)  / detJ;
+
+       f_ele(aa) = f_ele(aa) + weight(ll) * detJ * f(x_l, y_l) * Quad(aa, xi(ll), eta(ll));
+       for bb = 1 : n_en
+         [Nb_xi, Nb_eta] = Quad_grad(bb, xi(ll), eta(ll));
+         Nb_x = (Nb_xi * dy_deta    - Nb_eta * dy_dxi) / detJ;
+         Nb_y = (Nb_xi * (-dx_deta) + Nb_eta * dx_dxi)  / detJ;
+
+         k_ele(aa,bb) = k_ele(aa,bb) + weight(ll) * detJ * kappa *...
+           ( Na_x * Nb_x + Na_y * Nb_y);
+       end % end of bb-loop
+     end % end of aa-loop
+   end % end of quadrature loop
+
+   % global assembly
+   for aa = 1 : n_en
+     PP = LM(aa, ee);
+     if PP > 0
+       F(PP) = F(PP) + f_ele(aa);
+       for bb = 1 : n_en
+         QQ = LM(bb, ee);
+         if QQ > 0
+           K(PP, QQ) = K(PP, QQ) + k_ele(aa, bb);
+         else
+           % do something for non-zero g boundary condition
+         end
+       end
+     end
+   end
+end % end of element loop
+
+d_temp = K \ F;
+disp = zeros(n_np, 1);
+
+for ii = 1 : n_np
+  index = ID(ii);
+  if index > 0
+    disp(ii) = d_temp(index);
+  end
+end
+
+% plot the solution
+[X, Y] = meshgrid( 0:hh_x:1, 0:hh_y:1 );
+Z = reshape(disp, n_np_x, n_np_y);
+surf(X, Y, Z');
 
 
 % EOF
