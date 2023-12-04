@@ -18,8 +18,8 @@ n_int     = n_int_xi * n_int_eta;
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 100;               % number of element in x-direction
-n_el_y = 100;               % number of element in y-direction
+n_el_x = 200;               % number of element in x-direction
+n_el_y = 200;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -74,7 +74,7 @@ n_eq = n_np - n_np_x * 2 - n_np_y * 2 + 4;
 LM = ID(IEN);
 
 % Start the assembly procedure
-K = zeros(n_eq, n_eq);
+K = spalloc(n_eq, n_eq, 9*n_eq);
 F = zeros(n_eq, 1);
 
 for ee = 1 : n_el
@@ -150,9 +150,48 @@ for ii = 1 : n_np
 end
 
 % plot the solution
-[X, Y] = meshgrid( 0:hh_x:1, 0:hh_y:1 );
-Z = reshape(disp, n_np_x, n_np_y);
-surf(X, Y, Z');
+%[X, Y] = meshgrid( 0:hh_x:1, 0:hh_y:1 );
+%Z = reshape(disp, n_np_x, n_np_y);
+%surf(X, Y, Z');
 
+% postprocess the solution by calculating the error measured in L2 norm
+errorL2 = 0.0; bottomL2 = 0.0;
+errorH1 = 0.0; bottomH1 = 0.0;
+for ee = 1 : n_el
+  x_ele = x_coor( IEN(1:n_en, ee) );
+  y_ele = y_coor( IEN(1:n_en, ee) );
+  u_ele = disp(   IEN(1:n_en, ee) );
+
+  for ll = 1 : n_int
+    x_l = 0.0; y_l = 0.0; u_l = 0.0;
+    u_l_xi = 0.0; u_l_eta = 0.0;
+    dx_dxi = 0.0; dy_dxi = 0.0; dx_deta = 0.0; dy_deta = 0.0;
+    for aa = 1 : n_en
+      x_l = x_l + x_ele(aa) * Quad(aa, xi(ll), eta(ll));
+      y_l = y_l + y_ele(aa) * Quad(aa, xi(ll), eta(ll));
+      u_l = u_l + u_ele(aa) * Quad(aa, xi(ll), eta(ll));
+      [Na_xi, Na_eta] = Quad_grad(aa, xi(ll), eta(ll));
+      u_l_xi  = u_l_xi  + u_ele(aa) * Na_xi;
+      u_l_eta = u_l_eta + u_ele(aa) * Na_eta;
+      dx_dxi  = dx_dxi  + x_ele(aa) * Na_xi;
+      dx_deta = dx_deta + x_ele(aa) * Na_eta;
+      dy_dxi  = dy_dxi  + y_ele(aa) * Na_xi;
+      dy_deta = dy_deta + y_ele(aa) * Na_eta;
+    end
+    detJ = dx_dxi * dy_deta - dx_deta * dy_dxi;
+
+    u_l_x = (u_l_xi * dy_deta - u_l_eta * dy_dxi) / detJ;
+    u_l_y = (u_l_xi * (-dx_deta) + u_l_eta * dx_dxi) / detJ;
+
+    errorL2 = errorL2 + weight(ll) * detJ * (u_l - exact(x_l, y_l))^2;
+    errorH1 = errorH1 + weight(ll) * detJ *...
+      (( u_l_x- exact_x(x_l,y_l))^2 + ( u_l_y - exact_y(x_l,y_l))^2);
+    bottomL2 = bottomL2 + weight(ll) * detJ * exact(x_l, y_l)^2;
+    bottomH1 = bottomH1 + weight(ll) * detJ * (exact_x(x_l,y_l)^2 + exact_y(x_l,y_l)^2);
+  end
+end
+
+errorL2 = sqrt(errorL2) / sqrt(bottomL2);
+errorH1 = sqrt(errorH1) / sqrt(bottomH1);
 
 % EOF
