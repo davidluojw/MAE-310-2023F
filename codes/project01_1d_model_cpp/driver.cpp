@@ -150,6 +150,7 @@ int main()
             // inverse of dx_dxi
             double dxi_dx = 1.0 / dx_dxi;
 
+            // generate element stiffness matrix and element force vector
             for (int aa = 0; aa < n_en; ++aa)
             {
                 f_e[aa] = f_e[aa] + Gop->w[ll] * f(x_l) * Polyshape(deg, aa + 1, Gop->x[ll], 0) * dx_dxi; 
@@ -234,24 +235,92 @@ int main()
     // LU factorization
     LU_var * lu_var = new LU_var;
     lu_var = LU_fac(K, n_eq, pp);
-    for (int ii = 0; ii < n_eq * n_eq; ++ii)
-    {
-        std::cout << "mat[" << ii << "] = " << lu_var->mat[ii] << std::endl;
-    }
-    for (int ii = 0; ii < n_eq; ++ii)
-    {
-        std::cout << "pp[" << ii << "] = " << lu_var->pp[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_eq * n_eq; ++ii)
+    // {
+    //     std::cout << "mat[" << ii << "] = " << lu_var->mat[ii] << std::endl;
+    // }
+    // for (int ii = 0; ii < n_eq; ++ii)
+    // {
+    //     std::cout << "pp[" << ii << "] = " << lu_var->pp[ii] << std::endl;
+    // }
 
     // LU solve, solution x array
     double * x = new double[n_eq] ();
     x = LU_solve(F, n_eq, lu_var->pp, lu_var->mat);
+    // for (int ii = 0; ii < n_eq; ++ii)
+    // {
+    //     std::cout << "x[" << ii << "] = " << x[ii] << std::endl;
+    // }
+
+    // --------------------------------------------------------
+
+    // Generate the full solution vector by inserting back the Dirichlet value
+    double *disp = new double[n_np]();
     for (int ii = 0; ii < n_eq; ++ii)
     {
-        std::cout << "x[" << ii << "] = " << x[ii] << std::endl;
+        disp[ii] = x[ii];
+    }
+    disp[n_np - 1] = g;
+
+    //-------------------------------------------------------
+    
+    // Calculate the error
+    int nqp = 10;   // we need more points
+    Gop = Gauss(nqp, -1, 1);
+
+    // errors
+    double L2_top = 0.0; double L2_bot = 0.0;
+    double H1_top = 0.0; double H1_bot = 0.0;
+
+    for (int ee = 0; ee < n_el; ++ee)
+    {
+        double *x_ele = new double[n_en] ();
+        double *u_ele = new double[n_en] ();
+
+        // Global coordinates of x
+        for (int aa = 0; aa < n_en; ++aa)
+        {
+            x_ele[aa] = x_coor[IEN[aa * n_el + ee] - 1];
+            u_ele[aa] = disp[IEN[aa * n_el + ee] - 1];
+        } 
+
+
+        for (int ll = 0; ll < n_int; ++ll)
+        {
+            double dx_dxi = 0.0;
+            double x_l = 0.0;
+            double du_dxi = 0.0;
+            double uh = 0.0;
+            // push forward from parent frame Gop->x[ll] to physical frame x_l
+            for (int aa = 0; aa < n_en; ++aa)
+            {
+                x_l = x_l + x_ele[aa] * Polyshape(deg, aa + 1, Gop->x[ll], 0);
+                uh  = uh  + u_ele[aa] * Polyshape(deg, aa + 1, Gop->x[ll], 0);
+                dx_dxi = dx_dxi + x_ele[aa] * Polyshape(deg, aa + 1, Gop->x[ll], 1);
+                du_dxi = du_dxi + u_ele[aa] * Polyshape(deg, aa + 1, Gop->x[ll], 1);
+            }
+
+            // inverse of dx_dxi
+            double dxi_dx = 1.0 / dx_dxi;
+
+            L2_top = L2_top + Gop->w[ll] * pow( uh - exact(x_l), 2) * dx_dxi;
+            L2_bot = L2_bot + Gop->w[ll] * pow(exact(x_l), 2) * dx_dxi;
+
+            H1_top = H1_top + Gop->w[ll] * pow(du_dxi * dxi_dx - exact_x(x_l), 2) * dx_dxi;
+            H1_bot = H1_bot + Gop->w[ll] * pow(exact_x(x_l), 2) * dx_dxi;
+
+        }
     }
 
+    L2_top = sqrt(L2_top); L2_bot = sqrt(L2_bot);
 
+    H1_top = sqrt(H1_top); H1_bot = sqrt(H1_bot);
+
+    double L2_error = L2_top / L2_bot;
+    double H1_error = H1_top / H1_bot;
+
+    std::cout << "L2_error = " << L2_error << std::endl;
+    std::cout << "H1_error = " << H1_error << std::endl;
 
 
 
