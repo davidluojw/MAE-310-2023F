@@ -17,7 +17,7 @@ double exact_x(double x)
 
 double f(double x)
 {
-    return -20 * pow(x, 3);
+    return -20.0 * pow(x, 3);
 }
 
 double g = 1.0, h = 0.0;
@@ -114,7 +114,7 @@ int main()
 
     
     
-    for (int ee =0; ee < 1; ++ee)
+    for (int ee =0; ee < n_el; ++ee)
     {
         double *k_e = new double[n_en * n_en] ();
         double *f_e = new double[n_en] ();
@@ -167,36 +167,56 @@ int main()
             std::cout << "f_e [" << ii << "] = " << f_e[ii] << std::endl;
         }
 
-    //     // Now we need to put element k and f into global K and F
-    //     for (int aa = 0; aa < n_en; ++aa)
-    //     {
-    //         int PP;
-    //         PP = LM[aa * n_el + ee];
-    //         if (PP > 0)
-    //         {
-    //             F[PP - 1] = F[PP - 1] + f_e[aa];
-    //             for (int bb = 0; bb < n_en; ++bb)
-    //             {
-    //                 int QQ;
-    //                 QQ = LM[bb * n_el + ee];
-    //                 if (QQ > 0)
-    //                 {
-    //                     K[(PP - 1) * n_eq + QQ - 1] = K[(PP - 1) * n_eq + QQ - 1] + k_e[aa * n_en + bb];
-    //                 } 
-    //                 else 
-    //                 {
-    //                     F[PP - 1] = F[PP - 1] - k_e[aa * n_en + bb] * g;
-    //                 }
-    //             }
-    //         }
+        // Now we need to put element k and f into global K and F
+        for (int aa = 0; aa < n_en; ++aa)
+        {
+            int PP;
+            PP = LM[aa * n_el + ee];
+            if (PP > 0)
+            {
+                F[PP - 1] = F[PP - 1] + f_e[aa];
+                for (int bb = 0; bb < n_en; ++bb)
+                {
+                    int QQ;
+                    QQ = LM[bb * n_el + ee];
+                    if (QQ > 0)
+                    {
+                        K[(PP - 1) * n_eq + QQ - 1] = K[(PP - 1) * n_eq + QQ - 1] + k_e[aa * n_en + bb];
+                    } 
+                    else 
+                    {
+                        F[PP - 1] = F[PP - 1] - k_e[aa * n_en + bb] * g;
+                    }
+                }
+            }
 
-    //     }
+        }
+
+        if (ee == 0)
+        {
+            F[ID[IEN[ 0 * n_el + ee] - 1] - 1] = F[ID[IEN[ 0 * n_el + ee] - 1] - 1] + h;
+        }
 
 
 
         delete [] k_e;
         delete [] f_e;
         delete [] x_ele;
+    }
+
+    for (int ii = 0; ii < n_eq * n_eq; ++ii)
+    {
+        if (K[ii] != 0)
+        {
+            std::cout << "ii = " << ii << std::endl;
+            int a = ii / n_eq + 1, b = ii % n_eq + 1;
+            std::cout << "K [" << a << ", " << b << "] = " << K[ii] << std::endl;
+        }
+            
+    }
+    for (int ii = 0; ii < n_eq; ++ii)
+    {
+        std::cout << "F [" << ii << "] = " << F[ii] << std::endl;
     }
 
 

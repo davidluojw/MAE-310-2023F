@@ -23,7 +23,7 @@ int main()
 
 
 
-    val = Polyshape(3, 1, Gop->x[4], 1);
+    val = Polyshape(3, 1, Gop->x[4], 0);
 
     std::cout << "val = " << val << std::endl;
 
