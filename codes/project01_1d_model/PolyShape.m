@@ -26,7 +26,7 @@ switch degree
             end
         elseif a == 2
             if der == 0
-                val = 1 -xi^2;
+                val = 1 - xi^2;
             elseif der == 1
                 val = -2 * xi;
             end
@@ -48,7 +48,7 @@ switch degree
             end
         elseif a == 2
             if der == 0
-                val = 27 *(xi^2-1)*(xi-(1/3))/16;
+                val = 27 * (xi^2-1)*(xi-(1/3))/16;
             elseif der == 1
                 val = 27 * (2*xi*(xi-(1/3))+xi^2-1)/16;
             end
