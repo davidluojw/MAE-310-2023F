@@ -1,5 +1,6 @@
 #include "Gauss.hpp"
 #include "PolyShape.hpp"
+#include "LU.hpp"
 
 //--------------------------------------------------------
 // Problem definition
@@ -125,10 +126,10 @@ int main()
         {
             x_ele[aa] = x_coor[IEN[aa * n_el + ee] - 1];
         } 
-        for (int ii = 0; ii < n_en; ++ii)
-        {
-            std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
-        }
+        // for (int ii = 0; ii < n_en; ++ii)
+        // {
+        //     std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
+        // }
 
         // Compute every Gauss points
         for (int ll = 0; ll < n_int; ++ll)
@@ -142,8 +143,8 @@ int main()
                 dx_dxi = dx_dxi + x_ele[aa] * Polyshape(deg, aa + 1, Gop->x[ll], 1);
                 x_l = x_l + x_ele[aa] * Polyshape(deg, aa + 1, Gop->x[ll], 0);
             }
-            std::cout << "dx_dxi = " << dx_dxi << std::endl;
-            std::cout << "x_l = " << x_l << std::endl;
+            // std::cout << "dx_dxi = " << dx_dxi << std::endl;
+            // std::cout << "x_l = " << x_l << std::endl;
             
 
             // inverse of dx_dxi
@@ -158,14 +159,14 @@ int main()
                 }
             }
         }
-        for (int ii = 0; ii < n_en * n_en; ++ii)
-        {
-            std::cout << "k_e [" << ii << "] = " << k_e[ii] << std::endl;
-        }
-        for (int ii = 0; ii < n_en; ++ii)
-        {
-            std::cout << "f_e [" << ii << "] = " << f_e[ii] << std::endl;
-        }
+        // for (int ii = 0; ii < n_en * n_en; ++ii)
+        // {
+        //     std::cout << "k_e [" << ii << "] = " << k_e[ii] << std::endl;
+        // }
+        // for (int ii = 0; ii < n_en; ++ii)
+        // {
+        //     std::cout << "f_e [" << ii << "] = " << f_e[ii] << std::endl;
+        // }
 
         // Now we need to put element k and f into global K and F
         for (int aa = 0; aa < n_en; ++aa)
@@ -204,20 +205,54 @@ int main()
         delete [] x_ele;
     }
 
+    // for (int ii = 0; ii < n_eq * n_eq; ++ii)
+    // {
+    //     if (K[ii] != 0)
+    //     {
+    //         std::cout << "ii = " << ii << std::endl;
+    //         int a = ii / n_eq + 1, b = ii % n_eq + 1;
+    //         std::cout << "K [" << a << ", " << b << "] = " << K[ii] << std::endl;
+    //     }
+            
+    // }
+    // for (int ii = 0; ii < n_eq; ++ii)
+    // {
+    //     std::cout << "F [" << ii << "] = " << F[ii] << std::endl;
+    // }
+
+    //--------------------------------------------------------
+
+    // Now we have K and F assembled and we solve the linear system Kd = F
+    // pp: permutation infomation of row of equation Kd=F generated from LU-fac
+    // initialize:
+    int * pp = new int[n_eq];
+    for (int ii = 0; ii < n_eq; ++ii)
+    {
+        pp[ii] = ii;
+    }
+
+    // LU factorization
+    LU_var * lu_var = new LU_var;
+    lu_var = LU_fac(K, n_eq, pp);
     for (int ii = 0; ii < n_eq * n_eq; ++ii)
     {
-        if (K[ii] != 0)
-        {
-            std::cout << "ii = " << ii << std::endl;
-            int a = ii / n_eq + 1, b = ii % n_eq + 1;
-            std::cout << "K [" << a << ", " << b << "] = " << K[ii] << std::endl;
-        }
-            
+        std::cout << "mat[" << ii << "] = " << lu_var->mat[ii] << std::endl;
     }
     for (int ii = 0; ii < n_eq; ++ii)
     {
-        std::cout << "F [" << ii << "] = " << F[ii] << std::endl;
+        std::cout << "pp[" << ii << "] = " << lu_var->pp[ii] << std::endl;
     }
+
+    // LU solve, solution x array
+    double * x = new double[n_eq] ();
+    x = LU_solve(F, n_eq, lu_var->pp, lu_var->mat);
+    for (int ii = 0; ii < n_eq; ++ii)
+    {
+        std::cout << "x[" << ii << "] = " << x[ii] << std::endl;
+    }
+
+
+
 
 
     delete [] K;
