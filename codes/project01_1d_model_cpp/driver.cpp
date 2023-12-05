@@ -74,10 +74,10 @@ int main()
         ID[ii] = ii + 1;
     }
     ID[n_np - 1] = 0; // Modify ID according to the Dirichlet BC info
-    for (int ii = 0; ii < n_np; ++ii)
-    {
-        std::cout << "ID[" << ii << "] = " << ID[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_np; ++ii)
+    // {
+    //     std::cout << "ID[" << ii << "] = " << ID[ii] << std::endl;
+    // }
 
     double LM[1 * n_en * n_el];
     for (int ee = 0; ee < n_el; ++ee)
@@ -87,10 +87,26 @@ int main()
             LM[aa * n_el + ee] = ID[IEN[aa * n_el + ee] - 1];
         }
     }
-    for (int ii = 0; ii < n_en * n_el; ++ii)
+    // for (int ii = 0; ii < n_en * n_el; ++ii)
+    // {
+    //     std::cout << "LM[" << ii << "] = " << LM[ii] << std::endl;
+    // }
+
+    //--------------------------------------------------------
+
+    // generate the quadrature rule
+    GaussOutput * Gop = new GaussOutput;
+    Gop = Gauss(n_int, -1, 1);
+    for (int ii = 0; ii < n_int; ++ii)
     {
-        std::cout << "LM[" << ii << "] = " << LM[ii] << std::endl;
+        std::cout << "w[" << ii << "] = " << Gop->w[ii] << std::endl;
     }
+    for (int ii = 0; ii < n_int; ++ii)
+    {
+        std::cout << "xi[" << ii << "] = " << Gop->x[ii] << std::endl;
+    }
+
+
 
 
 
