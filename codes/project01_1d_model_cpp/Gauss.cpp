@@ -43,10 +43,7 @@ GaussOutput * Gauss(int N, int a, int b)
         y[ii] = cos((2*lin[ii] + 1) * PI / (2 * N + 2)) + (0.27 / N1) * sin(PI * xu[ii] * N / N2);
     }
 
-    // for (int ii = 0; ii < N1; ++ii)
-    // {
-    //     std::cout << "y[" << ii << "] = " << y[ii] << std::endl;
-    // }
+
 
     // Legendre-Gauss Vandermore Matrix
     double L[N1 * N2];
@@ -58,10 +55,7 @@ GaussOutput * Gauss(int N, int a, int b)
             L[ii * N2 + jj] = 0;
         }
     }
-    // for (int ii = 0; ii < N1 * N2; ++ii)
-    // {
-    //     std::cout << "L[" << ii << "] = " << L[ii] << std::endl;
-    // }
+
 
     
 
@@ -75,11 +69,6 @@ GaussOutput * Gauss(int N, int a, int b)
             Lp[ii * N2 + jj] = 0;
         }
     }
-
-    // for (int ii = 0; ii < N1 * N2; ++ii)
-    // {
-    //     std::cout << "Lp[" << ii << "] = " << Lp[ii] << std::endl;
-    // }
     
     // Compute the zeros of the N+1 Legendre Polynomial
     // using the recursion relation and the Newton-Raphson method
@@ -154,11 +143,6 @@ GaussOutput * Gauss(int N, int a, int b)
             y[ii] = y00[ii] - L[ii * N2 + (N2 - 1)] / Lpp[ii];
         }
 
-        // for (int ii = 0; ii < N1; ++ii)
-        // {
-        //     std::cout << "y[" << ii << "] = " << y[ii] << std::endl;
-        // }
-
         max_value = 0.0;
 
         for (int ii = 0; ii < N1; ++ii)
@@ -169,7 +153,6 @@ GaussOutput * Gauss(int N, int a, int b)
             }
         }
 
-        // std::cout << "max_value = " << max_value << std::endl;
     }
     
     GaussOutput * Gop = new GaussOutput;
@@ -182,16 +165,6 @@ GaussOutput * Gauss(int N, int a, int b)
         Gop->x[ii] = (a * (1 - y[ii]) + b * (1 + y[ii])) / 2.0; 
     }
 
-    for (int ii = 0; ii < N1; ++ii)
-    {
-        std::cout << "Lpp[" << ii << "] = " << Lpp[ii] << std::endl;
-    }
-    for (int ii = 0; ii < N1; ++ii)
-    {
-        std::cout << "y[" << ii << "] = " << y[ii] << std::endl;
-
-    }
-    std::cout << "w[1] = " << (b-a) / ((1 - y[1] * y[1]) * Lpp[1] * Lpp[1]) * ((double)N2 / (double)N1) * ((double)N2 / (double)N1) << std::endl;
     // Compute the weights
     Gop->w = new double[N1];
     for (int ii = 0; ii < N1; ++ii)
