@@ -50,6 +50,22 @@ int main()
     // }
 
 
+    // IEN
+    int IEN[n_en * n_el];
+
+    for (int ee = 0; ee < n_el; ++ee)
+    {
+        for (int aa = 0; aa < n_en; ++aa)
+        {
+            IEN[aa * n_el + ee] = ee * deg + (aa+1);
+        }
+    }
+    for (int ii = 0; ii < n_en * n_el; ++ii)
+    {
+        std::cout << "IEN[" << ii << "] = " << IEN[ii] << std::endl;
+    }
+
+
     return 0;
 }
 
