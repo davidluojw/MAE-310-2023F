@@ -10,9 +10,20 @@ int main()
 
     Gop = Gauss(5, -1, 1);
 
+    for (int ii = 0; ii < 5; ++ii)
+    {
+        std::cout << "w[" << ii << "] = " << Gop->w[ii] << std::endl;
+    }
+    for (int ii = 0; ii < 5; ++ii)
+    {
+        std::cout << "xi[" << ii << "] = " << Gop->x[ii] << std::endl;
+    }
+
     double val;
 
-    val = Polyshape(2, 1, Gop->x[4], 1);
+
+
+    val = Polyshape(3, 1, Gop->x[4], 1);
 
     std::cout << "val = " << val << std::endl;
 

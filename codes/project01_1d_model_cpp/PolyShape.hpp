@@ -10,12 +10,12 @@ double Polyshape(int degree, int a, double xi, int der)
     case 1:
         if (a == 1)
         {
-            if (der == 0) val =0.5 * (1 - xi);
+            if (der == 0) val =0.5 * (1.0 - xi);
             else if (der == 1) val = -0.5;
         }
         else if (a == 2)
         {
-            if (der == 0) val = 0.5 * (1 + xi);
+            if (der == 0) val = 0.5 * (1.0 + xi);
             else if (der == 1) val = 0.5;
         }
         
@@ -24,17 +24,17 @@ double Polyshape(int degree, int a, double xi, int der)
     case 2:
         if (a == 1)
         {
-            if (der == 0) val = 0.5 * xi * (xi - 1);
+            if (der == 0) val = 0.5 * xi * (xi - 1.0);
             else if (der == 1) val = xi - 0.5;
         }
         else if (a == 2)
         {
-            if (der == 0) val = 1 - xi * xi;
-            else if (der == 1) val = -2 * xi;
+            if (der == 0) val = 1.0 - xi * xi;
+            else if (der == 1) val = -2.0 * xi;
         }
         else if (a == 3)
         {
-            if (der == 0) val = 0.5 * xi * (xi + 1);
+            if (der == 0) val = 0.5 * xi * (xi + 1.0);
             else if (der == 1) val  = xi + 0.5; 
         }
 
@@ -43,23 +43,23 @@ double Polyshape(int degree, int a, double xi, int der)
     case 3:
         if (a == 1)
         {
-            if (der == 0) val = -9 * (xi - (1/3)) * (xi + (1/3)) * (xi -1) / 16;
-            else if (der == 1) val = -9 * (2 * xi * (xi - 1)+ xi * xi - (1/9)) / 16;
+            if (der == 0) val = -9.0 * (xi - (1.0/3.0)) * (xi + (1.0/3.0)) * (xi -1.0) / 16.0;
+            else if (der == 1) val = -9.0 * (2.0 * xi * (xi - 1.0)+ xi * xi - (1.0/9.0)) / 16.0;
         }
         else if (a == 2)
         {
-            if (der == 0) val = 27 * (xi * xi - 1) * (xi - (1/3)) / 16;
-            else if (der == 1) val = 27 * (2 * xi * (xi - (1/3)) + xi * xi - 1) / 16;
+            if (der == 0) val = 27.0 * (xi * xi - 1.0) * (xi - (1.0/3.0)) / 16.0;
+            else if (der == 1) val = 27.0 * (2 * xi * (xi - (1.0/3.0)) + xi * xi - 1.0) / 16.0;
         }
         else if (a == 3)
         {
-            if (der == 0) val = -27 * (xi * xi - 1) * (xi + (1/3)) / 16;
-            else if (der == 1) val = -27 * (2 * xi * (xi + (1/3)) + xi * xi - 1) / 16; 
+            if (der == 0) val = -27.0 * (xi * xi - 1.0) * (xi + (1.0/3.0)) / 16.0;
+            else if (der == 1) val = -27.0 * (2.0 * xi * (xi + (1.0/3.0)) + xi * xi - 1.0) / 16.0; 
         }
         else if (a == 4)    
         {           
-            if (der == 0) val  = 9 * (xi + 1)*(xi * xi - (1/9)) / 16;
-            else if (der == 1) val = 9 * (xi * xi - (1/9) + 2 * xi * (xi + 1)) / 16;
+            if (der == 0) val  = 9.0 * (xi + 1.0)*(xi * xi - (1.0/9.0)) / 16.0;
+            else if (der == 1) val = 9.0 * (xi * xi - (1.0/9.0) + 2.0 * xi * (xi + 1.0)) / 16.0;
         }
         
         break;
