@@ -113,10 +113,10 @@ int main()
         for (int ex = 0; ex < n_el_x; ++ex)
         {
             int ee = ey * n_el_x + ex;
-            IEN[0 * n_el + ee] = ey * n_np_x + ex;
-            IEN[1 * n_el + ee] = ey * n_np_x + ex + 1;
-            IEN[2 * n_el + ee] = (ey + 1) * n_np_x + ex + 1;
-            IEN[3 * n_el + ee] = (ey + 1) * n_np_x + ex;
+            IEN[0 * n_el + ee] = ey * n_np_x + ex + 1;
+            IEN[1 * n_el + ee] = ey * n_np_x + ex + 2;
+            IEN[2 * n_el + ee] = (ey + 1) * n_np_x + ex + 2;
+            IEN[3 * n_el + ee] = (ey + 1) * n_np_x + ex + 1;
         }
     }
     for (int ii = 0; ii < n_en * n_el; ++ii)
@@ -127,12 +127,12 @@ int main()
     //--------------------------------------------------------
 
     // ID and LM arrays are generated based on the BC info
-    int ID[n_np];              // Space dimension is 2D
+    int *ID = new int[n_np]();              // Space dimension is 2D
     int counter = 1;                        // degree of freedom is 1 (heat problem, only temperature)
     // Dirichlet BC is around the domain
-    for (int ny = 1; ny < n_np_y; ++ny)
+    for (int ny = 1; ny < n_np_y - 1; ++ny)
     {
-        for (int nx = 1; nx < n_np_x; ++nx)
+        for (int nx = 1; nx < n_np_x - 1; ++nx)
         {
             ID[ny * n_np_x + nx] = counter;
             counter = counter + 1;
@@ -169,7 +169,7 @@ int main()
 
     //--------------------------------------------------------
     // Loop of element number
-    for (int ee =0; ee < 1; ++ee)
+    for (int ee =0; ee < n_el; ++ee)
     {
         double *k_ele = new double[n_en * n_en] ();
         double *f_ele = new double[n_en] ();
@@ -197,6 +197,7 @@ int main()
             double dx_dxi = 0.0; double dx_deta = 0.0;
             double dy_dxi = 0.0; double dy_deta = 0.0;
             double Na_xi = 0.0; double Na_eta = 0.0;
+            double Nb_xi = 0.0; double Nb_eta = 0.0;
             
 
             //--------------------------------------------------------
@@ -244,12 +245,17 @@ int main()
                 Na_xi = QdGdOp_aa->val_xi; Na_eta = QdGdOp_aa->val_eta;
                 double Na_x = (Na_xi * dy_deta - Na_eta * dy_dxi) / detJ;
                 double Na_y = (Na_xi * (-dx_deta) + Na_eta * dx_dxi) / detJ;
+                std::cout << "Na_x = " << Na_x << std::endl;
+                std::cout << "Na_y = " << Na_y << std::endl;
                 for (int bb = 0; bb < n_en; ++bb)
                 {
                     Quad_grad_Oput * QdGdOp_bb = new Quad_grad_Oput; 
-                    double Nb_x = (QdGdOp_bb->val_xi * dy_deta - QdGdOp_bb->val_eta * dy_dxi) / detJ;
-                    double Nb_y = (QdGdOp_bb->val_xi * (-dx_deta) + QdGdOp_bb->val_eta * dx_dxi) / detJ;
-
+                    QdGdOp_bb = Quad_grad(bb + 1, G2DOp->xi[ll], G2DOp->eta[ll]);
+                    Nb_xi = QdGdOp_bb->val_xi; Nb_eta = QdGdOp_bb->val_eta;
+                    double Nb_x = (Nb_xi * dy_deta -  Nb_eta * dy_dxi) / detJ;
+                    double Nb_y = (Nb_xi * (-dx_deta) + Nb_eta * dx_dxi) / detJ;
+                    std::cout << "Nb_x = " << Nb_x << std::endl;
+                    std::cout << "Nb_y = " << Nb_y << std::endl;
                     k_ele[aa * n_en + bb] = k_ele[aa * n_en + bb] + G2DOp->w[ll] * kappa * (Na_x * Nb_x + Na_y * Nb_y) * detJ;
 
                     delete QdGdOp_bb;
@@ -358,7 +364,7 @@ int main()
     for (int ii = 0; ii < n_np; ++ii)
     {
         int index = ID[ii];
-        if (index > 0) disp[ii] = d_temp[ii];
+        if (index > 0) disp[ii] = d_temp[index - 1];
     }
     // disp[n_np - 1] = g;   
     // non-zero Dirichlet BC
@@ -480,6 +486,7 @@ int main()
 
     delete [] K;
     delete [] F;
+    delete [] ID;
 
     delete G2DOp;
     delete [] x_coor;
