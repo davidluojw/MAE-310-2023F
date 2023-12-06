@@ -40,5 +40,10 @@ int main()
         std::cout << "val_eta[" << ii << "] = " << val_eta[ii] << std::endl;
     }
 
+    delete G2Dop;
+    delete [] val_xi;
+    delete [] val_eta;
+    delete QdGdOp;
+
     return 0;
 }

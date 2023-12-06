@@ -277,7 +277,7 @@ int main()
         double *x_ele = new double[n_en] ();
         double *u_ele = new double[n_en] ();
 
-        // Global coordinates of x
+        // Global coordinates of x in ee(th) element 
         for (int aa = 0; aa < n_en; ++aa)
         {
             x_ele[aa] = x_coor[IEN[aa * n_el + ee] - 1];
@@ -310,6 +310,9 @@ int main()
             H1_bot = H1_bot + Gop->w[ll] * pow(exact_x(x_l), 2) * dx_dxi;
 
         }
+
+        delete [] x_ele;
+        delete [] u_ele;
     }
 
     L2_top = sqrt(L2_top); L2_bot = sqrt(L2_bot);
@@ -326,6 +329,13 @@ int main()
 
     delete [] K;
     delete [] F;
+
+    delete Gop;
+    delete [] pp;
+    delete lu_var;
+    delete [] x;
+    delete [] disp;
+
 
 
 

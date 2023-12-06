@@ -67,6 +67,11 @@ int main()
         std::cout << "x[" << ii << "] = " << x[ii] << std::endl;
     }
 
+    delete [] A;
+    delete lu_var;
+    delete [] b;
+    delete x;
+
 
     
     return 0;

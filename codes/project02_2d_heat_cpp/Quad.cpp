@@ -33,5 +33,8 @@ int main()
         std::cout << "val[" << ii << "] = " << val[ii] << std::endl;
     }
 
+    delete G2Dop;
+    delete [] val;
+
     return 0;
 }

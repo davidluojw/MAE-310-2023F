@@ -20,7 +20,8 @@ int main()
         std::cout << "w[" << ii << "] = " << G2Dop->w[ii] << std::endl;
     }
 
-
-    return 0;
+    delete G2Dop;
     
+    return 0;
+
 }
