@@ -31,7 +31,12 @@ double f(double x, double y)
     return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0);
 }
 
-// double g = 1.0, h = 0.0;    // Dirichlet BC
+// Dirichlet BC
+double g(double x, double y)
+{
+    return 0.1 * sin((x + y) * 2 * PI);
+}
+
 
 //--------------------------------------------------------
 
@@ -44,25 +49,25 @@ int main()
     int n_int = n_int_xi * n_int_eta;
     Gauss2D_Output * G2DOp = new Gauss2D_Output;
     G2DOp = Gauss2D(n_int_xi, n_int_eta);
-    for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
-    {
-        std::cout << "xi[" << ii << "] = " << G2DOp->xi[ii] << std::endl;
-    }
-    for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
-    {
-        std::cout << "eta[" << ii << "] = " << G2DOp->eta[ii] << std::endl;
-    }
-    for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
-    {
-        std::cout << "w[" << ii << "] = " << G2DOp->w[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
+    // {
+    //     std::cout << "xi[" << ii << "] = " << G2DOp->xi[ii] << std::endl;
+    // }
+    // for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
+    // {
+    //     std::cout << "eta[" << ii << "] = " << G2DOp->eta[ii] << std::endl;
+    // }
+    // for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
+    // {
+    //     std::cout << "w[" << ii << "] = " << G2DOp->w[ii] << std::endl;
+    // }
     
     //--------------------------------------------------------
     // Parameters of the FEM
     int n_en = 4;                // 4-node quadrilateral element
 
-    int n_el_x = 10;            // number of element in x-direction
-    int n_el_y = 10;            // number of element in y-direction
+    int n_el_x = 20;            // number of element in x-direction
+    int n_el_y = 20;            // number of element in y-direction
     int n_el = n_el_x * n_el_y;  // total number of element in 2D domain
     
     int n_np_x = n_el_x + 1;     // number of node points in x-direction
@@ -89,14 +94,14 @@ int main()
             y_coor[index] = ny * hh_y;
         }
     }
-    for (int ii = 0; ii < n_np; ++ii)
-    {
-        std::cout << "x_coor[" << ii << "] = " << x_coor[ii] << std::endl;
-    }
-    for (int ii = 0; ii < n_np; ++ii)
-    {
-        std::cout << "y_coor[" << ii << "] = " << y_coor[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_np; ++ii)
+    // {
+    //     std::cout << "x_coor[" << ii << "] = " << x_coor[ii] << std::endl;
+    // }
+    // for (int ii = 0; ii < n_np; ++ii)
+    // {
+    //     std::cout << "y_coor[" << ii << "] = " << y_coor[ii] << std::endl;
+    // }
 
     //--------------------------------------------------------
 
@@ -119,10 +124,10 @@ int main()
             IEN[3 * n_el + ee] = (ey + 1) * n_np_x + ex + 1;
         }
     }
-    for (int ii = 0; ii < n_en * n_el; ++ii)
-    {
-        std::cout << "IEN[" << ii << "] = " << IEN[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_en * n_el; ++ii)
+    // {
+    //     std::cout << "IEN[" << ii << "] = " << IEN[ii] << std::endl;
+    // }
 
     //--------------------------------------------------------
 
@@ -138,10 +143,10 @@ int main()
             counter = counter + 1;
         }
     }
-    for (int ii = 0; ii < n_np; ++ii)
-    {
-        std::cout << "ID[" << ii << "] = " << ID[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_np; ++ii)
+    // {
+    //     std::cout << "ID[" << ii << "] = " << ID[ii] << std::endl;
+    // }
 
     // According the Dirichlet BC define the number of equation
     n_eq = n_np - 2 * n_np_x - 2 * n_np_y + 4;
@@ -154,10 +159,10 @@ int main()
             LM[aa * n_el + ee] = ID[IEN[aa * n_el + ee] - 1];
         }
     }
-    for (int ii = 0; ii < n_en * n_el; ++ii)
-    {
-        std::cout << "LM[" << ii << "] = " << LM[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_en * n_el; ++ii)
+    // {
+    //     std::cout << "LM[" << ii << "] = " << LM[ii] << std::endl;
+    // }
 
     //--------------------------------------------------------
 
@@ -185,8 +190,8 @@ int main()
         } 
         for (int ii = 0; ii < n_en; ++ii)
         {
-            std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
-            std::cout << "y_ele[" << ii << "] = " << y_ele[ii] << std::endl;
+            // std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
+            // std::cout << "y_ele[" << ii << "] = " << y_ele[ii] << std::endl;
         }
 
         //--------------------------------------------------------
@@ -222,12 +227,12 @@ int main()
                 delete QdGdOp;
                 
             }
-            std::cout << "x_l(" << ll << ") = " << x_l << std::endl;
-            std::cout << "y_l(" << ll << ") = " << y_l << std::endl;
-            std::cout << "dx_dxi(" << ll << ") = " << dx_dxi << std::endl;
-            std::cout << "dx_deta(" << ll << ") = " << dx_deta << std::endl;
-            std::cout << "dy_dxi(" << ll << ") = " << dy_dxi << std::endl;
-            std::cout << "dy_deta(" << ll << ") = " << dy_deta << std::endl;
+            // std::cout << "x_l(" << ll << ") = " << x_l << std::endl;
+            // std::cout << "y_l(" << ll << ") = " << y_l << std::endl;
+            // std::cout << "dx_dxi(" << ll << ") = " << dx_dxi << std::endl;
+            // std::cout << "dx_deta(" << ll << ") = " << dx_deta << std::endl;
+            // std::cout << "dy_dxi(" << ll << ") = " << dy_dxi << std::endl;
+            // std::cout << "dy_deta(" << ll << ") = " << dy_deta << std::endl;
             
             // Jacobian determinant
             double detJ = dx_dxi * dy_deta - dx_deta * dy_dxi;
@@ -245,8 +250,8 @@ int main()
                 Na_xi = QdGdOp_aa->val_xi; Na_eta = QdGdOp_aa->val_eta;
                 double Na_x = (Na_xi * dy_deta - Na_eta * dy_dxi) / detJ;
                 double Na_y = (Na_xi * (-dx_deta) + Na_eta * dx_dxi) / detJ;
-                std::cout << "Na_x = " << Na_x << std::endl;
-                std::cout << "Na_y = " << Na_y << std::endl;
+                // std::cout << "Na_x = " << Na_x << std::endl;
+                // std::cout << "Na_y = " << Na_y << std::endl;
                 for (int bb = 0; bb < n_en; ++bb)
                 {
                     Quad_grad_Oput * QdGdOp_bb = new Quad_grad_Oput; 
@@ -254,8 +259,8 @@ int main()
                     Nb_xi = QdGdOp_bb->val_xi; Nb_eta = QdGdOp_bb->val_eta;
                     double Nb_x = (Nb_xi * dy_deta -  Nb_eta * dy_dxi) / detJ;
                     double Nb_y = (Nb_xi * (-dx_deta) + Nb_eta * dx_dxi) / detJ;
-                    std::cout << "Nb_x = " << Nb_x << std::endl;
-                    std::cout << "Nb_y = " << Nb_y << std::endl;
+                    // std::cout << "Nb_x = " << Nb_x << std::endl;
+                    // std::cout << "Nb_y = " << Nb_y << std::endl;
                     k_ele[aa * n_en + bb] = k_ele[aa * n_en + bb] + G2DOp->w[ll] * kappa * (Na_x * Nb_x + Na_y * Nb_y) * detJ;
 
                     delete QdGdOp_bb;
@@ -263,14 +268,14 @@ int main()
 
                 delete QdGdOp_aa;
             }
-            for (int ii = 0; ii < n_en * n_en; ++ii)
-            {
-                std::cout << "k_ele [" << ii << "] = " << k_ele[ii] << std::endl;
-            }
-            for (int ii = 0; ii < n_en; ++ii)
-            {
-                std::cout << "f_ele [" << ii << "] = " << f_ele[ii] << std::endl;
-            }
+            // for (int ii = 0; ii < n_en * n_en; ++ii)
+            // {
+            //     std::cout << "k_ele [" << ii << "] = " << k_ele[ii] << std::endl;
+            // }
+            // for (int ii = 0; ii < n_en; ++ii)
+            // {
+            //     std::cout << "f_ele [" << ii << "] = " << f_ele[ii] << std::endl;
+            // }
         }
 
         //--------------------------------------------------------
@@ -294,6 +299,7 @@ int main()
                     {
                         // F[PP - 1] = F[PP - 1] - k_ele[aa * n_en + bb] * g;
                         // do something for non-zero g boundary condition
+
                     }
                 }
             }
@@ -313,19 +319,19 @@ int main()
         delete [] x_ele;
         delete [] y_ele;
     }
-    for (int ii = 0; ii < n_eq * n_eq; ++ii)
-    {
-        if (K[ii] != 0)
-        {
-            std::cout << "ii = " << ii << std::endl;
-            int a = ii / n_eq + 1, b = ii % n_eq + 1;
-            std::cout << "K [" << a << ", " << b << "] = " << K[ii] << std::endl;
-        }
-    }
-    for (int ii = 0; ii < n_eq; ++ii)
-    {
-        std::cout << "F [" << ii << "] = " << F[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_eq * n_eq; ++ii)
+    // {
+    //     if (K[ii] != 0)
+    //     {
+    //         std::cout << "ii = " << ii << std::endl;
+    //         int a = ii / n_eq + 1, b = ii % n_eq + 1;
+    //         std::cout << "K [" << a << ", " << b << "] = " << K[ii] << std::endl;
+    //     }
+    // }
+    // for (int ii = 0; ii < n_eq; ++ii)
+    // {
+    //     std::cout << "F [" << ii << "] = " << F[ii] << std::endl;
+    // }
 
     //--------------------------------------------------------
 
@@ -341,22 +347,22 @@ int main()
     // LU factorization
     LU_var * lu_var = new LU_var;
     lu_var = LU_fac(K, n_eq, pp);
-    for (int ii = 0; ii < n_eq * n_eq; ++ii)
-    {
-        std::cout << "mat[" << ii << "] = " << lu_var->mat[ii] << std::endl;
-    }
-    for (int ii = 0; ii < n_eq; ++ii)
-    {
-        std::cout << "pp[" << ii << "] = " << lu_var->pp[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_eq * n_eq; ++ii)
+    // {
+    //     std::cout << "mat[" << ii << "] = " << lu_var->mat[ii] << std::endl;
+    // }
+    // for (int ii = 0; ii < n_eq; ++ii)
+    // {
+    //     std::cout << "pp[" << ii << "] = " << lu_var->pp[ii] << std::endl;
+    // }
 
     // LU solve, solution x array
     double * d_temp = new double[n_eq] ();
     d_temp = LU_solve(F, n_eq, lu_var->pp, lu_var->mat);
-    for (int ii = 0; ii < n_eq; ++ii)
-    {
-        std::cout << "d_temp[" << ii << "] = " << d_temp[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_eq; ++ii)
+    // {
+    //     std::cout << "d_temp[" << ii << "] = " << d_temp[ii] << std::endl;
+    // }
 
     // --------------------------------------------------------
     // Generate the full solution vector by inserting back the Dirichlet value
@@ -368,10 +374,10 @@ int main()
     }
     // disp[n_np - 1] = g;   
     // non-zero Dirichlet BC
-    for (int ii = 0; ii < n_np; ++ii)
-    {
-        std::cout << "disp[" << ii << "] = " << disp[ii] << std::endl;
-    }
+    // for (int ii = 0; ii < n_np; ++ii)
+    // {
+    //     std::cout << "disp[" << ii << "] = " << disp[ii] << std::endl;
+    // }
 
 
     //-------------------------------------------------------
@@ -398,12 +404,12 @@ int main()
             y_ele[aa] = y_coor[IEN[aa * n_el + ee] - 1];
             u_ele[aa] = disp[IEN[aa * n_el + ee] - 1];
         } 
-        for (int ii = 0; ii < n_en; ++ii)
-        {
-            std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
-            std::cout << "y_ele[" << ii << "] = " << y_ele[ii] << std::endl;
-            std::cout << "u_ele[" << ii << "] = " << y_ele[ii] << std::endl;
-        }
+        // for (int ii = 0; ii < n_en; ++ii)
+        // {
+        //     std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
+        //     std::cout << "y_ele[" << ii << "] = " << y_ele[ii] << std::endl;
+        //     std::cout << "u_ele[" << ii << "] = " << y_ele[ii] << std::endl;
+        // }
 
 
         //--------------------------------------------------------
@@ -441,12 +447,12 @@ int main()
                 delete QdGdOp;
                 
             }
-            std::cout << "x_l(" << ll << ") = " << x_l << std::endl;
-            std::cout << "y_l(" << ll << ") = " << y_l << std::endl;
-            std::cout << "dx_dxi(" << ll << ") = " << dx_dxi << std::endl;
-            std::cout << "dx_deta(" << ll << ") = " << dx_deta << std::endl;
-            std::cout << "dy_dxi(" << ll << ") = " << dy_dxi << std::endl;
-            std::cout << "dy_deta(" << ll << ") = " << dy_deta << std::endl;
+            // std::cout << "x_l(" << ll << ") = " << x_l << std::endl;
+            // std::cout << "y_l(" << ll << ") = " << y_l << std::endl;
+            // std::cout << "dx_dxi(" << ll << ") = " << dx_dxi << std::endl;
+            // std::cout << "dx_deta(" << ll << ") = " << dx_deta << std::endl;
+            // std::cout << "dy_dxi(" << ll << ") = " << dy_dxi << std::endl;
+            // std::cout << "dy_deta(" << ll << ") = " << dy_deta << std::endl;
             
             // Jacobian determinant
             double detJ = dx_dxi * dy_deta - dx_deta * dy_dxi;
@@ -456,8 +462,8 @@ int main()
             // generate the error L2 norm and H1 norm
             double du_dx = (du_dxi * dy_deta - du_deta * dy_dxi) / detJ;
             double du_dy = (du_dxi * (-dx_deta) + du_deta * dx_dxi) / detJ;
-            std::cout << "du_dx(" << ll << ") = " << du_dx << std::endl;
-            std::cout << "du_dy(" << ll << ") = " << du_dy << std::endl;
+            // std::cout << "du_dx(" << ll << ") = " << du_dx << std::endl;
+            // std::cout << "du_dy(" << ll << ") = " << du_dy << std::endl;
 
             L2_top = L2_top + G2DOp->w[ll] * pow( u_l - exact(x_l, y_l), 2) * detJ;
             L2_bot = L2_bot + G2DOp->w[ll] * pow(exact(x_l, y_l), 2) * detJ;
