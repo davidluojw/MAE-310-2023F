@@ -18,7 +18,7 @@ long double PI = 3.14159265358979323846264338327950288419716939937510582;
 // manufactured solution and source term
 double exact(double x, double y)
 {
-    return x * (1.0 - x) * y * (1.0 - y);
+    return x * (1.0 - x) * y * (1.0 - y) + 0.1;
 }
 
 double exact_x(double x, double y)
@@ -39,7 +39,7 @@ double f(double x, double y)
 // Dirichlet BC
 double g(double x, double y)
 {
-    return 0.1 * sin((x + y) * 2 * PI);
+    return 0.1;
 }
 
 // Neumann BC
@@ -195,11 +195,11 @@ int main()
             x_ele[aa] = x_coor[IEN[aa * n_el + ee] - 1];
             y_ele[aa] = y_coor[IEN[aa * n_el + ee] - 1];
         } 
-        for (int ii = 0; ii < n_en; ++ii)
-        {
-            // std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
-            // std::cout << "y_ele[" << ii << "] = " << y_ele[ii] << std::endl;
-        }
+        // for (int ii = 0; ii < n_en; ++ii)
+        // {
+        //     std::cout << "x_ele[" << ii << "] = " << x_ele[ii] << std::endl;
+        //     std::cout << "y_ele[" << ii << "] = " << y_ele[ii] << std::endl;
+        // }
 
         //--------------------------------------------------------
         // Compute every Gauss points, loop over quadrature points
@@ -379,6 +379,31 @@ int main()
     {
         int index = ID[ii];
         if (index > 0) disp[ii] = d_temp[index - 1];
+    }
+
+    for (int ee = 0; ee < n_el; ++ee)
+    {
+        double *x_ele = new double[n_en] ();
+        double *y_ele = new double[n_en] ();
+        
+        // --------------------------------------------------------
+        // Global coordinates of x and y of nodes in ee(th) element
+        for (int aa = 0; aa < n_en; ++aa)
+        {
+            x_ele[aa] = x_coor[IEN[aa * n_el + ee] - 1];
+            y_ele[aa] = y_coor[IEN[aa * n_el + ee] - 1];
+        } 
+
+        for (int aa = 0; aa < n_en; ++aa)
+        {
+            int index = LM[aa * n_el + ee];
+            if (index > 0) disp[ IEN[aa * n_el + ee] -1 ] = d_temp[index - 1];
+            else disp[ IEN[aa * n_el + ee] -1 ] = g(x_ele[aa], y_ele[aa]);
+        }
+
+        delete [] x_ele;
+        delete [] y_ele;
+
     }
     // disp[n_np - 1] = g;   
     // non-zero Dirichlet BC

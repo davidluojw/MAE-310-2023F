@@ -1,5 +1,7 @@
 clear all; clc;
 
+format long;
+
 kappa = 1.0; % isotropic homogeneous heat conductivity
 
 % manufactured solution and source term
