@@ -10,7 +10,7 @@ exact_y = @(x,y) x*(1-x)*(1-2*y);
 f = @(x,y) -2*x*(x-1)-2*y*(y-1);
 
 %Dirichlet BC
-g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
+% g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
 
 % quadrature rule
 n_int_xi  = 3;
@@ -136,7 +136,7 @@ for ee = 1 : n_el
            K(PP, QQ) = K(PP, QQ) + k_ele(aa, bb);
          else
            % do something for non-zero g boundary condition
-           F(PP) = F(PP) - k_ele(aa, bb) * g(x_ele(bb), y_ele(bb));
+%            F(PP) = F(PP) - k_ele(aa, bb) * g(x_ele(bb), y_ele(bb));
          end
        end
      end

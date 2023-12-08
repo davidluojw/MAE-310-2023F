@@ -3,26 +3,30 @@ clear all; clc;
 kappa = 1.0; % isotropic homogeneous heat conductivity
 
 % manufactured solution and source term
-exact   = @(x,y) x*(1-x)*y*(1-y);
+exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1;
 exact_x = @(x,y) (1-2*x)*y*(1-y);
 exact_y = @(x,y) x*(1-x)*(1-2*y);
 
 f = @(x,y) -2*x*(x-1)-2*y*(y-1);
 
 %Dirichlet BC
-g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
+g = @(x, y) 0.1;
+
+%Neumann BC
+% h = @(x, y) (y == 0)*-exact_y(x, y) +  (y == 1)*exact_y(x, y);
 
 % quadrature rule
 n_int_xi  = 3;
 n_int_eta = 3;
 n_int     = n_int_xi * n_int_eta;
 [xi, eta, weight] = Gauss2D(n_int_xi, n_int_eta);
+[xi1D, weight1D] = Gauss(n_int_xi, -1, 1);
 
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 200;               % number of element in x-direction
-n_el_y = 200;               % number of element in y-direction
+n_el_x = 100;               % number of element in x-direction
+n_el_y = 100;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -72,7 +76,7 @@ for ny = 2 : n_np_y-1
   end
 end
 
-n_eq = n_np - n_np_x * 2 - n_np_y * 2 + 4;
+n_eq = n_np - n_np_y * 2 - n_np_x * 2 + 4;
 
 LM = ID(IEN);
 
@@ -83,6 +87,7 @@ F = zeros(n_eq, 1);
 for ee = 1 : n_el
    k_ele = zeros(n_en, n_en);
    f_ele = zeros(n_en, 1);
+   h_ele = zeros(n_en, 1);
 
    x_ele = zeros(n_en, 1);
    y_ele = x_ele;
@@ -124,6 +129,24 @@ for ee = 1 : n_el
        end % end of bb-loop
      end % end of aa-loop
    end % end of quadrature loop
+   
+   % loop over quadrature points for h boundary condtition
+%    for ll = 1:n_int_xi
+%         x_l_1D = 0.0; y_l_1D = 0.0;
+%         dx_dxi_1D = 0.0;
+%         for aa = 1:n_en / 2
+%             if (y_ele(aa) == 0 || y_ele(aa) == 1)
+%                 x_l_1D = x_l_1D + x_ele(aa) * PolyShape(1, aa, xi1D(ll), 0);
+%                 y_l_1D = y_l_1D + y_ele(aa) * PolyShape(1, aa, xi1D(ll), 0);
+%                 dx_dxi_1D  = dx_dxi_1D  + x_ele(aa) * PolyShape(1, aa, xi1D(ll), 1);
+%             end
+%         end
+%         for aa = 1:n_en/2
+%            if (y_ele(aa) == 0 || y_ele(aa) == 1) 
+%                h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(1, aa, xi1D(ll), 0);
+%            end
+%        end
+%    end
 
    % global assembly
    for aa = 1 : n_en
@@ -136,20 +159,52 @@ for ee = 1 : n_el
            K(PP, QQ) = K(PP, QQ) + k_ele(aa, bb);
          else
            % do something for non-zero g boundary condition
+           % g: {x = 0, y in (0,1)}+{x = 1, y in (0,1)}
+%            if (x_ele(bb) == 0 || x_ele(bb) == 1)
            F(PP) = F(PP) - k_ele(aa, bb) * g(x_ele(bb), y_ele(bb));
-         end
-       end
-     end
-   end
+%            end
+         end % end of if QQ
+       end   % end of for bb
+       %do something for non-zero h boundary condition
+       %h: {y = 0, x in (0,1)} + {y = 1, x in (0,1)}
+%        if (y_ele(aa) == 0 || y_ele(aa) == 1)
+%            F(PP) = F(PP) + h_ele(aa);
+%        end
+       
+     end   % end of if PP
+     
+   end    % end of for aa
 end % end of element loop
 
 d_temp = K \ F;
 disp = zeros(n_np, 1);
 
-for ii = 1 : n_np
-  index = ID(ii);
-  if index > 0
-    disp(ii) = d_temp(index);
+% for ii = 1 : n_np
+%   index = ID(ii);
+%   if index > 0
+%     disp(ii) = d_temp(index);
+%   else 
+%     disp(ii) = 0.1;
+%   end
+% end
+
+
+
+for ee = 1: n_el
+  x_ele = zeros(n_en, 1);
+  y_ele = x_ele;
+  for aa = 1 : n_en
+     x_ele(aa) = x_coor( IEN(aa,ee) );
+     y_ele(aa) = y_coor( IEN(aa,ee) );
+  end
+  
+  for aa = 1:n_en
+    index = LM(aa, ee);
+    if index > 0
+        disp(IEN(aa, ee)) = d_temp(index);
+    else
+        disp(IEN(aa, ee)) = g(x_ele(aa), y_ele(aa));
+    end
   end
 end
 
