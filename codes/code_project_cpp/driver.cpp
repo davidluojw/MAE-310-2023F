@@ -42,6 +42,9 @@ double g(double x, double y)
     return 0.1 * sin((x + y) * 2 * PI);
 }
 
+// Neumann BC
+
+
 //--------------------------------------------------------
 
 int main()
