@@ -5,14 +5,14 @@ format long;
 kappa = 1.0; % isotropic homogeneous heat conductivity
 
 % manufactured solution and source term
-exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1;
-exact_x = @(x,y) (1-2*x)*y*(1-y);
-exact_y = @(x,y) x*(1-x)*(1-2*y);
+exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1 * sin((x + y) * 2 * pi);
+exact_x = @(x,y) (1-2*x)*y*(1-y) + 0.1 * 2 * pi * cos((x + y) * 2 * pi);
+exact_y = @(x,y) x*(1-x)*(1-2*y) + 0.1 * 2 * pi * cos((x + y) * 2 * pi);
 
 f = @(x,y) -2*x*(x-1)-2*y*(y-1);
 
 %Dirichlet BC
-g = @(x, y) 0.1;
+g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
 
 %Neumann BC
 % h = @(x, y) (y == 0)*-exact_y(x, y) +  (y == 1)*exact_y(x, y);
@@ -27,8 +27,8 @@ n_int     = n_int_xi * n_int_eta;
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 100;               % number of element in x-direction
-n_el_y = 100;               % number of element in y-direction
+n_el_x = 200;               % number of element in x-direction
+n_el_y = 200;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -214,6 +214,10 @@ end
 [X, Y] = meshgrid( 0:hh_x:1, 0:hh_y:1 );
 Z = reshape(disp, n_np_x, n_np_y);
 surf(X, Y, Z');
+xlabel("X");
+ylabel("Y");
+zlabel("Temperature");
+
 
 % postprocess the solution by calculating the error measured in L2 norm
 errorL2 = 0.0; bottomL2 = 0.0;
