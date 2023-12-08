@@ -2,6 +2,10 @@
 #include "Quad.hpp"
 #include "Quad_grad.hpp"
 #include "LU.hpp"
+#include <cmath>
+
+
+
 
 
 //--------------------------------------------------------
@@ -9,6 +13,7 @@
 // exact solution
 
 double kappa = 1.0;   // isotropic homogeneous heat conductivity
+long double PI = 3.14159265358979323846264338327950288419716939937510582;
 
 // manufactured solution and source term
 double exact(double x, double y)
@@ -31,7 +36,11 @@ double f(double x, double y)
     return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0);
 }
 
-// double g = 1.0, h = 0.0;    // Dirichlet BC
+// Dirichlet BC
+double g(double x, double y)
+{
+    return 0.1 * sin((x + y) * 2 * PI);
+}
 
 //--------------------------------------------------------
 
@@ -61,8 +70,8 @@ int main()
     // Parameters of the FEM
     int n_en = 4;                // 4-node quadrilateral element
 
-    int n_el_x = 10;            // number of element in x-direction
-    int n_el_y = 10;            // number of element in y-direction
+    int n_el_x = 100;            // number of element in x-direction
+    int n_el_y = 100;            // number of element in y-direction
     int n_el = n_el_x * n_el_y;  // total number of element in 2D domain
     
     int n_np_x = n_el_x + 1;     // number of node points in x-direction
@@ -294,6 +303,8 @@ int main()
                     {
                         // F[PP - 1] = F[PP - 1] - k_ele[aa * n_en + bb] * g;
                         // do something for non-zero g boundary condition
+                        F[PP - 1] = F[PP - 1] - k_ele[aa * n_en + bb] * g(x_ele[bb], y_ele[bb]);
+                        
                     }
                 }
             }
@@ -372,6 +383,9 @@ int main()
     // {
     //     std::cout << "disp[" << ii << "] = " << disp[ii] << std::endl;
     // }
+
+    //--------------------------------------------------------
+    // Plot the solution
 
 
     //-------------------------------------------------------
@@ -479,8 +493,8 @@ int main()
     double L2_error = L2_top / L2_bot;
     double H1_error = H1_top / H1_bot;
 
-    // std::cout << "L2_error = " << L2_error << std::endl;
-    // std::cout << "H1_error = " << H1_error << std::endl;
+    std::cout << "L2_error = " << L2_error << std::endl;
+    std::cout << "H1_error = " << H1_error << std::endl;
 
 
 
