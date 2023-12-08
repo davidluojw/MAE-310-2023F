@@ -18,28 +18,28 @@ long double PI = 3.14159265358979323846264338327950288419716939937510582;
 // manufactured solution and source term
 double exact(double x, double y)
 {
-    return x * (1.0 - x) * y * (1.0 - y) + 0.1;
+    return x * (1.0 - x) * y * (1.0 - y) + 0.1 * sin((x + y) * 2 * PI);
 }
 
 double exact_x(double x, double y)
 {
-    return (1.0 - 2.0 * x) * y * (1.0 - y);
+    return (1.0 - 2.0 * x) * y * (1.0 - y) + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
 }
 
 double exact_y(double x, double y)
 {
-    return x * (1.0 - x) * (1.0 - 2.0 * y);
+    return x * (1.0 - x) * (1.0 - 2.0 * y) + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
 }
 
 double f(double x, double y)
 {
-    return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0);
+    return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0) + 2 * 0.1 * pow(2 * PI, 2) * sin((x + y) * 2 * PI);
 }
 
 // Dirichlet BC
 double g(double x, double y)
 {
-    return 0.1;
+    return 0.1 * sin((x + y) * 2 * PI);
 }
 
 // Neumann BC
@@ -73,8 +73,8 @@ int main()
     // Parameters of the FEM
     int n_en = 4;                // 4-node quadrilateral element
 
-    int n_el_x = 100;            // number of element in x-direction
-    int n_el_y = 100;            // number of element in y-direction
+    int n_el_x = 10;            // number of element in x-direction
+    int n_el_y = 10;            // number of element in y-direction
     int n_el = n_el_x * n_el_y;  // total number of element in 2D domain
     
     int n_np_x = n_el_x + 1;     // number of node points in x-direction
@@ -456,6 +456,7 @@ int main()
             double dx_dxi = 0.0; double dx_deta = 0.0; 
             double dy_dxi = 0.0; double dy_deta = 0.0; 
             double du_dxi = 0.0; double du_deta = 0.0;
+            double Na_xi = 0.0; double Na_eta = 0.0;
 
             //--------------------------------------------------------
             // push forward from parent frame x_ele * Quad (x_e * Na(ll)) to physical frame x_l
@@ -470,15 +471,17 @@ int main()
                 Quad_grad_Oput * QdGdOp = new Quad_grad_Oput; 
 
                 QdGdOp = Quad_grad(aa + 1, G2DOp->xi[ll], G2DOp->eta[ll]);
+                Na_xi = QdGdOp->val_xi; Na_eta = QdGdOp->val_eta;
+                
                 x_l = x_l + x_ele[aa] * Quad(aa + 1, G2DOp->xi[ll], G2DOp->eta[ll]);
                 y_l = y_l + y_ele[aa] * Quad(aa + 1, G2DOp->xi[ll], G2DOp->eta[ll]);
                 u_l = u_l + u_ele[aa] * Quad(aa + 1, G2DOp->xi[ll], G2DOp->eta[ll]);
-                dx_dxi = dx_dxi + x_ele[aa] * QdGdOp->val_xi;
-                dx_deta = dx_deta + x_ele[aa] * QdGdOp->val_eta;
-                dy_dxi = dy_dxi + y_ele[aa] * QdGdOp->val_xi;
-                dy_deta = dy_deta + y_ele[aa] * QdGdOp->val_eta;
-                du_dxi = du_dxi + u_ele[aa] * QdGdOp->val_xi;
-                du_deta = du_deta + u_ele[aa] * QdGdOp->val_eta;
+                dx_dxi = dx_dxi + x_ele[aa] * Na_xi;
+                dx_deta = dx_deta + x_ele[aa] * Na_eta;
+                dy_dxi = dy_dxi + y_ele[aa] * Na_xi;
+                dy_deta = dy_deta + y_ele[aa] * Na_eta;
+                du_dxi = du_dxi + u_ele[aa] * Na_xi;
+                du_deta = du_deta + u_ele[aa] * Na_eta;
 
                 delete QdGdOp;
                 
@@ -505,7 +508,7 @@ int main()
             L2_bot = L2_bot + G2DOp->w[ll] * pow(exact(x_l, y_l), 2) * detJ;
 
             H1_top = H1_top + G2DOp->w[ll] * (pow(du_dx - exact_x(x_l, y_l), 2) + pow(du_dy - exact_y(x_l, y_l), 2)) * detJ;
-            H1_bot = H1_bot + G2DOp->w[ll] * (pow(exact_x(x_l, y_l), 2), pow(exact_y(x_l, y_l), 2)) * detJ;
+            H1_bot = H1_bot + G2DOp->w[ll] * (pow(exact_x(x_l, y_l), 2) + pow(exact_y(x_l, y_l), 2)) * detJ;
 
         }
 

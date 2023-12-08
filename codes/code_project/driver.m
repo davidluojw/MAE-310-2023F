@@ -9,7 +9,7 @@ exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1 * sin((x + y) * 2 * pi);
 exact_x = @(x,y) (1-2*x)*y*(1-y) + 0.1 * 2 * pi * cos((x + y) * 2 * pi);
 exact_y = @(x,y) x*(1-x)*(1-2*y) + 0.1 * 2 * pi * cos((x + y) * 2 * pi);
 
-f = @(x,y) -2*x*(x-1)-2*y*(y-1);
+f = @(x,y) -2*x*(x-1)-2*y*(y-1) + 2 * 0.1 * (2 * pi)^2 * sin((x + y) * 2 * pi);
 
 %Dirichlet BC
 g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
@@ -27,8 +27,8 @@ n_int     = n_int_xi * n_int_eta;
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 200;               % number of element in x-direction
-n_el_y = 200;               % number of element in y-direction
+n_el_x = 100;               % number of element in x-direction
+n_el_y = 100;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
