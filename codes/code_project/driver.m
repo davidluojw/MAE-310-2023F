@@ -1,21 +1,23 @@
 clear all; clc;
 
-format long;
 
 kappa = 1.0; % isotropic homogeneous heat conductivity
 
-% manufactured solution and source term
-exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1 * sin((x + y) * 2 * pi);
-exact_x = @(x,y) (1-2*x)*y*(1-y) + 0.1 * 2 * pi * cos((x + y) * 2 * pi);
-exact_y = @(x,y) x*(1-x)*(1-2*y) + 0.1 * 2 * pi * cos((x + y) * 2 * pi);
+tol = eps;
 
-f = @(x,y) -2*x*(x-1)-2*y*(y-1) + 2 * 0.1 * (2 * pi)^2 * sin((x + y) * 2 * pi);
+
+% manufactured solution and source term
+exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1;% * sin((x + y) * 2 * pi);
+exact_x = @(x,y) (1-2*x)*y*(1-y); %+ 0.1 * 2 * pi * cos((x + y) * 2 * pi);
+exact_y = @(x,y) x*(1-x)*(1-2*y); %+ 0.1 * 2 * pi * cos((x + y) * 2 * pi);
+
+f = @(x,y) -2*x*(x-1)-2*y*(y-1); %+ 2 * 0.1 * (2 * pi)^2 * sin((x + y) * 2 * pi);
 
 %Dirichlet BC
-g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
+g = @(x, y) 0.1; %* sin((x + y) * 2 * pi);
 
 %Neumann BC
-% h = @(x, y) (y == 0)*-exact_y(x, y) +  (y == 1)*exact_y(x, y);
+h = @(x, y) -x*(1-x);
 
 % quadrature rule
 n_int_xi  = 3;
@@ -27,8 +29,8 @@ n_int     = n_int_xi * n_int_eta;
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 100;               % number of element in x-direction
-n_el_y = 100;               % number of element in y-direction
+n_el_x = 200;               % number of element in x-direction
+n_el_y = 200;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -71,14 +73,14 @@ end
 % ID array
 ID = zeros(n_np, 1);
 counter = 1;
-for ny = 2 : n_np_y-1
+for ny = 1 : n_np_y
   for nx = 2 : n_np_x-1
     ID( (ny-1)*n_np_x + nx ) = counter;
     counter = counter + 1;
   end
 end
 
-n_eq = n_np - n_np_y * 2 - n_np_x * 2 + 4;
+n_eq = n_np - n_np_y * 2;
 
 LM = ID(IEN);
 
@@ -133,22 +135,41 @@ for ee = 1 : n_el
    end % end of quadrature loop
    
    % loop over quadrature points for h boundary condtition
-%    for ll = 1:n_int_xi
-%         x_l_1D = 0.0; y_l_1D = 0.0;
-%         dx_dxi_1D = 0.0;
-%         for aa = 1:n_en / 2
-%             if (y_ele(aa) == 0 || y_ele(aa) == 1)
-%                 x_l_1D = x_l_1D + x_ele(aa) * PolyShape(1, aa, xi1D(ll), 0);
-%                 y_l_1D = y_l_1D + y_ele(aa) * PolyShape(1, aa, xi1D(ll), 0);
-%                 dx_dxi_1D  = dx_dxi_1D  + x_ele(aa) * PolyShape(1, aa, xi1D(ll), 1);
-%             end
-%         end
-%         for aa = 1:n_en/2
-%            if (y_ele(aa) == 0 || y_ele(aa) == 1) 
-%                h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(1, aa, xi1D(ll), 0);
-%            end
-%        end
-%    end
+   for ll = 1:n_int_xi
+        x_l_1D = 0.0; y_l_1D = 0.0;
+        dx_dxi_1D = 0.0;
+        for aa = 1:n_en / 2
+            x_l_1D = x_l_1D + x_ele(aa) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 0);
+            y_l_1D = y_l_1D + y_ele(aa) * PolyShape(n_en - 1, aa, xi1D(ll), 0);
+            dx_dxi_1D  = dx_dxi_1D + x_ele(aa) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 1);
+        end
+        for aa = 1:n_en / 2
+           if (y_ele(aa) == 0) 
+               h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 0);
+           end
+        end
+        for aa = 3:n_en
+           if (y_ele(aa) == 1)
+               h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa - 2, xi1D(ll), 0);
+           end
+       end
+   end
+   
+   for aa = 1:n_en
+       PP = LM(aa, ee);
+       if PP > 0
+           
+           %do something for non-zero h boundary condition
+           %h: {y = 0, x in (0,1)} + {y = 1, x in (0,1)}
+           if (y_ele(aa) == 0)
+               F(PP) = F(PP) + h_ele(aa);
+           end
+           if (y_ele(aa) == 1)
+               F(PP) = F(PP) + h_ele(aa);
+           end
+       end
+   end
+           
 
    % global assembly
    for aa = 1 : n_en
@@ -162,16 +183,9 @@ for ee = 1 : n_el
          else
            % do something for non-zero g boundary condition
            % g: {x = 0, y in (0,1)}+{x = 1, y in (0,1)}
-%            if (x_ele(bb) == 0 || x_ele(bb) == 1)
            F(PP) = F(PP) - k_ele(aa, bb) * g(x_ele(bb), y_ele(bb));
-%            end
          end % end of if QQ
        end   % end of for bb
-       %do something for non-zero h boundary condition
-       %h: {y = 0, x in (0,1)} + {y = 1, x in (0,1)}
-%        if (y_ele(aa) == 0 || y_ele(aa) == 1)
-%            F(PP) = F(PP) + h_ele(aa);
-%        end
        
      end   % end of if PP
      
@@ -180,16 +194,6 @@ end % end of element loop
 
 d_temp = K \ F;
 disp = zeros(n_np, 1);
-
-% for ii = 1 : n_np
-%   index = ID(ii);
-%   if index > 0
-%     disp(ii) = d_temp(index);
-%   else 
-%     disp(ii) = 0.1;
-%   end
-% end
-
 
 
 for ee = 1: n_el
