@@ -30,6 +30,8 @@ int main()
 
     std::cout << "error = " << error << std::endl;
 
+    delete Gop;
+
     return 0;
 
 

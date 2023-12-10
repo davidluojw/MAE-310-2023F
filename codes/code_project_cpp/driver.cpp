@@ -5,9 +5,6 @@
 #include <cmath>
 #include "PolyShape.hpp"
 
-
-
-
 //--------------------------------------------------------
 // Problem definition
 // exact solution
@@ -16,36 +13,76 @@ double kappa = 1.0;   // isotropic homogeneous heat conductivity
 long double PI = 3.14159265358979323846264338327950288419716939937510582;
 
 // manufactured solution and source term
+double G(double x, double y)
+{
+    return sin (2 * PI * (x + y));
+}
+
+double G_x(double x, double y)
+{
+    return 2 * PI * cos(2 * PI * (x + y));
+}
+
+double G_y(double x, double y)
+{
+    return 2 * PI * cos(2 * PI * (x + y));
+}
+
+double G_xx(double x, double y)
+{
+    return -pow(2 * PI, 2) * sin(2 * PI * (x + y));
+}
+
+double G_yy(double x, double y)
+{
+    return -pow(2 * PI, 2) * sin(2 * PI * (x + y));
+}
+
 double exact(double x, double y)
 {
-    return x * (1.0 - x) * y * (1.0 - y) + 0.1; // * sin((x + y) * 2 * PI);
+    return x * (1.0 - x) * y * (1.0 - y) + 0.1 * G(x, y); 
 }
 
 double exact_x(double x, double y)
 {
-    return (1.0 - 2.0 * x) * y * (1.0 - y); // + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
+    return (1.0 - 2.0 * x) * y * (1.0 - y) + 0.1 * G_x(x, y); 
 }
 
 double exact_y(double x, double y)
 {
-    return x * (1.0 - x) * (1.0 - 2.0 * y); // + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
+    return x * (1.0 - x) * (1.0 - 2.0 * y) + 0.1 * G_y(x, y); 
+}
+
+double exact_xx(double x, double y)
+{
+    return -2.0 * y * (1.0 - y) + 0.1 * G_xx(x, y);
+}
+
+double exact_yy(double x, double y)
+{
+    return -2.0 * x * (1.0 - x) + 0.1 * G_yy(x, y);
 }
 
 double f(double x, double y)
 {
-    return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0); // + 2 * 0.1 * pow(2 * PI, 2) * sin((x + y) * 2 * PI);
+    return - exact_xx(x, y) - exact_yy(x, y);  
 }
 
 // Dirichlet BC
 double g(double x, double y)
 {
-    return 0.1; // * sin((x + y) * 2 * PI);
+    return 0.1 * G(x, y);
 }
 
 // Neumann BC
-double h(double x, double y)
+double h_0(double x, double y)
 {
-    return -x * (1 - x);
+    return exact_y(x, 0) * (-1);
+}
+
+double h_1(double x, double y)
+{
+    return exact_y(x, 1) * 1;
 }
 
 
@@ -79,8 +116,8 @@ int main()
     // Parameters of the FEM
     int n_en = 4;                // 4-node quadrilateral element
 
-    int n_el_x = 100;            // number of element in x-direction
-    int n_el_y = 100;            // number of element in y-direction
+    int n_el_x = 20;            // number of element in x-direction
+    int n_el_y = 20;            // number of element in y-direction
     int n_el = n_el_x * n_el_y;  // total number of element in 2D domain
     
     int n_np_x = n_el_x + 1;     // number of node points in x-direction
@@ -308,14 +345,14 @@ int main()
             {
                 if (y_ele[aa] == 0.0) 
                 {
-                    h_ele[aa] = h_ele[aa] + G1DOp->w[ll] * dx_dxi_1D * h(x_l_1D, y_l_1D) * Polyshape(n_en / 2 - 1, aa + 1, G1DOp->x[ll], 0);
+                    h_ele[aa] = h_ele[aa] + G1DOp->w[ll] * dx_dxi_1D * h_0(x_l_1D, y_l_1D) * Polyshape(n_en / 2 - 1, aa + 1, G1DOp->x[ll], 0);
                 }
             }
             for(int aa = 2; aa < n_en; ++aa)
             {
                 if (y_ele[aa] == 1.0) 
                 {
-                    h_ele[aa] = h_ele[aa] + G1DOp->w[ll] * dx_dxi_1D * h(x_l_1D, y_l_1D) * Polyshape(n_en / 2 - 1, aa - 1, G1DOp->x[ll], 0);
+                    h_ele[aa] = h_ele[aa] + G1DOp->w[ll] * dx_dxi_1D * h_1(x_l_1D, y_l_1D) * Polyshape(n_en / 2 - 1, aa - 1, G1DOp->x[ll], 0);
                 }
             }
         }

@@ -31,11 +31,7 @@ double f(double x, double y)
     return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0);
 }
 
-// Dirichlet BC
-double g(double x, double y)
-{
-    return 0.1 * sin((x + y) * 2 * PI);
-}
+
 
 
 //--------------------------------------------------------
