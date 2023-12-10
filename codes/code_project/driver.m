@@ -29,8 +29,8 @@ n_int     = n_int_xi * n_int_eta;
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 200;               % number of element in x-direction
-n_el_y = 200;               % number of element in y-direction
+n_el_x = 100;               % number of element in x-direction
+n_el_y = 100;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -140,7 +140,7 @@ for ee = 1 : n_el
         dx_dxi_1D = 0.0;
         for aa = 1:n_en / 2
             x_l_1D = x_l_1D + x_ele(aa) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 0);
-            y_l_1D = y_l_1D + y_ele(aa) * PolyShape(n_en - 1, aa, xi1D(ll), 0);
+            y_l_1D = y_l_1D + y_ele(aa) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 0);
             dx_dxi_1D  = dx_dxi_1D + x_ele(aa) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 1);
         end
         for aa = 1:n_en / 2
@@ -151,21 +151,6 @@ for ee = 1 : n_el
         for aa = 3:n_en
            if (y_ele(aa) == 1)
                h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa - 2, xi1D(ll), 0);
-           end
-       end
-   end
-   
-   for aa = 1:n_en
-       PP = LM(aa, ee);
-       if PP > 0
-           
-           %do something for non-zero h boundary condition
-           %h: {y = 0, x in (0,1)} + {y = 1, x in (0,1)}
-           if (y_ele(aa) == 0)
-               F(PP) = F(PP) + h_ele(aa);
-           end
-           if (y_ele(aa) == 1)
-               F(PP) = F(PP) + h_ele(aa);
            end
        end
    end
@@ -186,7 +171,11 @@ for ee = 1 : n_el
            F(PP) = F(PP) - k_ele(aa, bb) * g(x_ele(bb), y_ele(bb));
          end % end of if QQ
        end   % end of for bb
-       
+       %do something for non-zero h boundary condition
+       %h: {y = 0, x in (0,1)} + {y = 1, x in (0,1)}
+       if (y_ele(aa) == 0 || y_ele(aa) == 1)
+           F(PP) = F(PP) + h_ele(aa);
+       end
      end   % end of if PP
      
    end    % end of for aa

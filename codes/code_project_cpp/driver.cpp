@@ -3,7 +3,7 @@
 #include "Quad_grad.hpp"
 #include "LU.hpp"
 #include <cmath>
-
+#include "PolyShape.hpp"
 
 
 
@@ -18,31 +18,35 @@ long double PI = 3.14159265358979323846264338327950288419716939937510582;
 // manufactured solution and source term
 double exact(double x, double y)
 {
-    return x * (1.0 - x) * y * (1.0 - y) + 0.1 * sin((x + y) * 2 * PI);
+    return x * (1.0 - x) * y * (1.0 - y) + 0.1; // * sin((x + y) * 2 * PI);
 }
 
 double exact_x(double x, double y)
 {
-    return (1.0 - 2.0 * x) * y * (1.0 - y) + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
+    return (1.0 - 2.0 * x) * y * (1.0 - y); // + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
 }
 
 double exact_y(double x, double y)
 {
-    return x * (1.0 - x) * (1.0 - 2.0 * y) + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
+    return x * (1.0 - x) * (1.0 - 2.0 * y); // + 0.1 * 2 * PI * cos((x + y) * 2 * PI);
 }
 
 double f(double x, double y)
 {
-    return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0) + 2 * 0.1 * pow(2 * PI, 2) * sin((x + y) * 2 * PI);
+    return -2.0 * x * (x - 1.0) - 2.0 * y * (y - 1.0); // + 2 * 0.1 * pow(2 * PI, 2) * sin((x + y) * 2 * PI);
 }
 
 // Dirichlet BC
 double g(double x, double y)
 {
-    return 0.1 * sin((x + y) * 2 * PI);
+    return 0.1; // * sin((x + y) * 2 * PI);
 }
 
 // Neumann BC
+double h(double x, double y)
+{
+    return -x * (1 - x);
+}
 
 
 //--------------------------------------------------------
@@ -55,7 +59,9 @@ int main()
     int n_int_eta = 3;
     int n_int = n_int_xi * n_int_eta;
     Gauss2D_Output * G2DOp = new Gauss2D_Output;
+    GaussOutput * G1DOp = new GaussOutput;
     G2DOp = Gauss2D(n_int_xi, n_int_eta);
+    G1DOp = Gauss(n_int_xi, -1, 1);
     // for (int ii = 0; ii < n_int_xi * n_int_eta; ++ii)
     // {
     //     std::cout << "xi[" << ii << "] = " << G2DOp->xi[ii] << std::endl;
@@ -73,8 +79,8 @@ int main()
     // Parameters of the FEM
     int n_en = 4;                // 4-node quadrilateral element
 
-    int n_el_x = 10;            // number of element in x-direction
-    int n_el_y = 10;            // number of element in y-direction
+    int n_el_x = 100;            // number of element in x-direction
+    int n_el_y = 100;            // number of element in y-direction
     int n_el = n_el_x * n_el_y;  // total number of element in 2D domain
     
     int n_np_x = n_el_x + 1;     // number of node points in x-direction
@@ -142,7 +148,7 @@ int main()
     int *ID = new int[n_np]();              // Space dimension is 2D
     int counter = 1;                        // degree of freedom is 1 (heat problem, only temperature)
     // Dirichlet BC is around the domain
-    for (int ny = 1; ny < n_np_y - 1; ++ny)
+    for (int ny = 0; ny < n_np_y; ++ny)
     {
         for (int nx = 1; nx < n_np_x - 1; ++nx)
         {
@@ -156,7 +162,7 @@ int main()
     // }
 
     // According the Dirichlet BC define the number of equation
-    n_eq = n_np - 2 * n_np_x - 2 * n_np_y + 4;
+    n_eq = n_np - 2 * n_np_x;
 
     double LM[1 * n_en * n_el];            // 2D, heat conduction problem (only temp degree of freedom)
     for (int ee = 0; ee < n_el; ++ee)
@@ -187,6 +193,7 @@ int main()
         double *f_ele = new double[n_en] ();
         double *x_ele = new double[n_en] ();
         double *y_ele = new double[n_en] ();
+        double *h_ele = new double[n_en] ();
         
         // --------------------------------------------------------
         // Global coordinates of x and y of nodes in ee(th) element
@@ -286,6 +293,34 @@ int main()
         }
 
         //--------------------------------------------------------
+        // loop over quadrature points for h boundary condtition
+        for (int ll = 0; ll < n_int_xi; ++ll)
+        {
+            double x_l_1D = 0.0; double y_l_1D = 0.0;
+            double dx_dxi_1D = 0.0;
+            for (int aa = 0; aa < n_en / 2; ++aa)
+            {
+                x_l_1D = x_l_1D + x_ele[aa] * Polyshape(n_en / 2 - 1, aa + 1, G1DOp->x[ll], 0);
+                y_l_1D = y_l_1D + y_ele[aa] * Polyshape(n_en / 2 - 1, aa + 1, G1DOp->x[ll], 0);
+                dx_dxi_1D = dx_dxi_1D + x_ele[aa] * Polyshape(n_en / 2 - 1, aa + 1, G1DOp->x[ll], 1);
+            }
+            for(int aa = 0; aa < n_en / 2; ++aa)
+            {
+                if (y_ele[aa] == 0.0) 
+                {
+                    h_ele[aa] = h_ele[aa] + G1DOp->w[ll] * dx_dxi_1D * h(x_l_1D, y_l_1D) * Polyshape(n_en / 2 - 1, aa + 1, G1DOp->x[ll], 0);
+                }
+            }
+            for(int aa = 2; aa < n_en; ++aa)
+            {
+                if (y_ele[aa] == 1.0) 
+                {
+                    h_ele[aa] = h_ele[aa] + G1DOp->w[ll] * dx_dxi_1D * h(x_l_1D, y_l_1D) * Polyshape(n_en / 2 - 1, aa - 1, G1DOp->x[ll], 0);
+                }
+            }
+        }
+
+        //--------------------------------------------------------
         // Now we need to put element k and f into global K and F, global assembly
         for (int aa = 0; aa < n_en; ++aa)
         {
@@ -306,22 +341,22 @@ int main()
                     {
                         // F[PP - 1] = F[PP - 1] - k_ele[aa * n_en + bb] * g;
                         // do something for non-zero g boundary condition
+                        //g: {x = 0, y in (0,1)}+{x = 1, y in (0,1)}
                         F[PP - 1] = F[PP - 1] - k_ele[aa * n_en + bb] * g(x_ele[bb], y_ele[bb]);
                         
-                    }
+                    } // end of if QQ
+                }  // end of for bb
+
+                //do something for non-zero h boundary condition
+                // h: {y = 0, x in (0,1)} + {y = 1, x in (0,1)}
+                if (y_ele[aa] == 0.0 || y_ele[aa] == 1.0)   
+                {
+                    F[PP - 1] = F[PP - 1] + h_ele[aa];
                 }
-            }
+                
+            } // end of if PP
 
-        }
-
-        // do something for h boundary condition
-        // if (ee == 0)
-        // {
-        //     F[ID[IEN[ 0 * n_el + ee] - 1] - 1] = F[ID[IEN[ 0 * n_el + ee] - 1] - 1] + h;
-        // }
-
-
-
+        } // end of for aa
         delete [] k_ele;
         delete [] f_ele;
         delete [] x_ele;
