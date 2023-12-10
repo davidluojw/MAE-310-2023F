@@ -6,18 +6,25 @@ kappa = 1.0; % isotropic homogeneous heat conductivity
 tol = eps;
 
 
+
 % manufactured solution and source term
-exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1;% * sin((x + y) * 2 * pi);
-exact_x = @(x,y) (1-2*x)*y*(1-y); %+ 0.1 * 2 * pi * cos((x + y) * 2 * pi);
-exact_y = @(x,y) x*(1-x)*(1-2*y); %+ 0.1 * 2 * pi * cos((x + y) * 2 * pi);
+G = @(x, y) sin((x + y) * 2 * pi);
+G_x = @(x, y) 2 * pi * cos((x + y) * 2 * pi);
+G_y = @(x, y) 2 * pi * cos((x + y) * 2 * pi);
+G_xx = @(x, y) -(2 * pi)^2 * sin((x + y) * 2 * pi);
+G_yy = @(x, y) -(2 * pi)^2 * sin((x + y) * 2 * pi);
 
-f = @(x,y) -2*x*(x-1)-2*y*(y-1); %+ 2 * 0.1 * (2 * pi)^2 * sin((x + y) * 2 * pi);
+exact   = @(x,y) x*(1-x)*y*(1-y) + 0.1*G(x, y);
+exact_x = @(x,y) (1-2*x)*y*(1-y) + 0.1*G_x(x, y); 
+exact_y = @(x,y) x*(1-x)*(1-2*y) + 0.1*G_y(x, y);
 
+f = @(x,y) -2*x*(x-1)-2*y*(y-1) - 0.1*(G_xx(x, y) + G_yy(x, y));
 %Dirichlet BC
-g = @(x, y) 0.1; %* sin((x + y) * 2 * pi);
+g = @(x, y) 0.1*G(x, y);
 
 %Neumann BC
-h = @(x, y) -x*(1-x);
+h_0 = @(x, y) -exact_y(x, 0);
+h_1 = @(x, y) exact_y(x, 1);
 
 % quadrature rule
 n_int_xi  = 3;
@@ -29,8 +36,8 @@ n_int     = n_int_xi * n_int_eta;
 % FEM mesh settings
 n_en = 4; % 4-node quadrilateral element
 
-n_el_x = 100;               % number of element in x-direction
-n_el_y = 100;               % number of element in y-direction
+n_el_x = 10;               % number of element in x-direction
+n_el_y = 10;               % number of element in y-direction
 n_el   = n_el_x * n_el_y; % total number of element in 2D domain
 
 n_np_x = n_el_x + 1;      % number of node points in x-direction
@@ -145,12 +152,12 @@ for ee = 1 : n_el
         end
         for aa = 1:n_en / 2
            if (y_ele(aa) == 0) 
-               h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 0);
+               h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h_0(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa, xi1D(ll), 0);
            end
         end
         for aa = 3:n_en
            if (y_ele(aa) == 1)
-               h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa - 2, xi1D(ll), 0);
+               h_ele(aa) = h_ele(aa) + weight1D(ll) * dx_dxi_1D * h_1(x_l_1D, y_l_1D) * PolyShape(n_en / 2 - 1, aa - 2, xi1D(ll), 0);
            end
        end
    end
