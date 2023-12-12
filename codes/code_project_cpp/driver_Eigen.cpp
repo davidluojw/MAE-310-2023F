@@ -122,8 +122,8 @@ int main()
     // Parameters of the FEM
     int n_en = 4;                // 4-node quadrilateral element
 
-    int n_el_x = 200;            // number of element in x-direction
-    int n_el_y = 200;            // number of element in y-direction
+    int n_el_x = 100;            // number of element in x-direction
+    int n_el_y = 100;            // number of element in y-direction
     int n_el = n_el_x * n_el_y;  // total number of element in 2D domain
     
     int n_np_x = n_el_x + 1;     // number of node points in x-direction

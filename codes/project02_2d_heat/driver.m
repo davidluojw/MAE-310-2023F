@@ -1,40 +1,46 @@
 clear all; clc;
 
 kappa = 1.0; % isotropic homogeneous heat conductivity
+rho   = 1.0; % density
+cap   = 1.0; % heat capacity
 
 % manufactured solution and source term
 exact   = @(x,y) x*(1-x)*y*(1-y);
 exact_x = @(x,y) (1-2*x)*y*(1-y);
 exact_y = @(x,y) x*(1-x)*(1-2*y);
 
-f = @(x,y) -2*x*(x-1)-2*y*(y-1);
+%f = @(x,y) -2*x*(x-1)-2*y*(y-1);
 
-%Dirichlet BC
-% g = @(x, y) 0.1 * sin((x + y) * 2 * pi);
+alpha = 0.5;
+
+T_final = 10.0;
+dt      = 0.1;
+t       = 0 : dt : T_final; % time sub-interval
+NN      = T_final / dt;
 
 % quadrature rule
-n_int_xi  = 3;
-n_int_eta = 3;
+n_int_xi  = 3;              % number of quadrature points in xi-direction
+n_int_eta = 3;              % number of quadrature points in eta-direction
 n_int     = n_int_xi * n_int_eta;
 [xi, eta, weight] = Gauss2D(n_int_xi, n_int_eta);
 
 % FEM mesh settings
-n_en = 4; % 4-node quadrilateral element
+n_en = 4;                   % 4-node quadrilateral element
 
 n_el_x = 200;               % number of element in x-direction
 n_el_y = 200;               % number of element in y-direction
-n_el   = n_el_x * n_el_y; % total number of element in 2D domain
+n_el   = n_el_x * n_el_y;   % total number of element in 2D domain
 
-n_np_x = n_el_x + 1;      % number of node points in x-direction
-n_np_y = n_el_y + 1;      % number of node points in y-direction
-n_np   = n_np_x * n_np_y; % total number of node points in 2D domain
+n_np_x = n_el_x + 1;        % number of node points in x-direction
+n_np_y = n_el_y + 1;        % number of node points in y-direction
+n_np   = n_np_x * n_np_y;   % total number of node points in 2D domain
 
 % generate the coordinates of the nodal points
 x_coor = zeros(n_np, 1);
 y_coor = zeros(n_np, 1);
 
-hh_x = 1 / n_el_x;        % mesh size in the x-direction
-hh_y = 1 / n_el_y;        % mesh size in the y-direction
+hh_x = 1 / n_el_x;          % mesh size in the x-direction
+hh_y = 1 / n_el_y;          % mesh size in the y-direction
 
 for ny = 1 : n_np_y
   for nx = 1 : n_np_x
@@ -78,21 +84,20 @@ LM = ID(IEN);
 
 % Start the assembly procedure
 K = spalloc(n_eq, n_eq, 9*n_eq);
+M = K;
 F = zeros(n_eq, 1);
 
 for ee = 1 : n_el
    k_ele = zeros(n_en, n_en);
+   m_ele = zeros(n_en, n_en);
    f_ele = zeros(n_en, 1);
 
-   x_ele = zeros(n_en, 1);
-   y_ele = x_ele;
-   for aa = 1 : n_en
-     x_ele(aa) = x_coor( IEN(aa,ee) );
-     y_ele(aa) = y_coor( IEN(aa,ee) );
-   end
+   x_ele = x_coor( IEN(1:n_en, ee) );
+   y_ele = y_coor( IEN(1:n_en, ee) );
 
    % loop over quadrature points   
    for ll = 1 : n_int
+     % we need the geometric mapping at each quadrature points
      x_l = 0.0; y_l = 0.0;
      dx_dxi = 0.0; dx_deta = 0.0;
      dy_dxi = 0.0; dy_deta = 0.0;
@@ -108,19 +113,27 @@ for ee = 1 : n_el
 
      detJ = dx_dxi * dy_deta - dx_deta * dy_dxi;
 
+     % we loop over a and b to assemble the element stiffness matrix and load
+     % vector
      for aa = 1 : n_en
+       Na = Quad(aa, xi(ll), eta(ll));
        [Na_xi, Na_eta] = Quad_grad(aa, xi(ll), eta(ll));
+
+       % See page 147 of Sec. 3.9 of the textbook for the shape function
+       % routine details
        Na_x = (Na_xi * dy_deta    - Na_eta * dy_dxi) / detJ;
        Na_y = (Na_xi * (-dx_deta) + Na_eta * dx_dxi)  / detJ;
 
        f_ele(aa) = f_ele(aa) + weight(ll) * detJ * f(x_l, y_l) * Quad(aa, xi(ll), eta(ll));
        for bb = 1 : n_en
+         Nb = Quad(bb, xi(ll), eta(ll));
          [Nb_xi, Nb_eta] = Quad_grad(bb, xi(ll), eta(ll));
          Nb_x = (Nb_xi * dy_deta    - Nb_eta * dy_dxi) / detJ;
          Nb_y = (Nb_xi * (-dx_deta) + Nb_eta * dx_dxi)  / detJ;
 
-         k_ele(aa,bb) = k_ele(aa,bb) + weight(ll) * detJ * kappa *...
-           ( Na_x * Nb_x + Na_y * Nb_y);
+         m_ele(aa,bb) = m_ele(aa,bb) + weight(ll) * detJ * rho * cap * Na * Nb;
+         k_ele(aa,bb) = k_ele(aa,bb) + weight(ll) * detJ * kappa * ( Na_x * Nb_x + Na_y * Nb_y);
+
        end % end of bb-loop
      end % end of aa-loop
    end % end of quadrature loop
@@ -133,69 +146,53 @@ for ee = 1 : n_el
        for bb = 1 : n_en
          QQ = LM(bb, ee);
          if QQ > 0
+           M(PP, QQ) = M(PP, QQ) + m_ele(aa, bb);
            K(PP, QQ) = K(PP, QQ) + k_ele(aa, bb);
          else
            % do something for non-zero g boundary condition
-%            F(PP) = F(PP) - k_ele(aa, bb) * g(x_ele(bb), y_ele(bb));
          end
        end
      end
    end
 end % end of element loop
 
-d_temp = K \ F;
+% set initial conditions
+dn = zeros(n_eq, 1);   % initial temperature is zero
+vn = M \ (F - K * dn); % solve M matrix to determine vn at initial time
 disp = zeros(n_np, 1);
 
+% insert the solution vector back with the g-data
 for ii = 1 : n_np
   index = ID(ii);
   if index > 0
-    disp(ii) = d_temp(index);
+    disp(ii) = dn(index);
   end
 end
+save("HEAT"+int2str(1000000), "disp", "n_el_x", "n_el_y");
 
-% plot the solution
-[X, Y] = meshgrid( 0:hh_x:1, 0:hh_y:1 );
-Z = reshape(disp, n_np_x, n_np_y);
-surf(X, Y, Z');
+LEFT = M + alpha * dt * K;
 
-% postprocess the solution by calculating the error measured in L2 norm
-errorL2 = 0.0; bottomL2 = 0.0;
-errorH1 = 0.0; bottomH1 = 0.0;
-for ee = 1 : n_el
-  x_ele = x_coor( IEN(1:n_en, ee) );
-  y_ele = y_coor( IEN(1:n_en, ee) );
-  u_ele = disp(   IEN(1:n_en, ee) );
+for n = 1 : NN
+  % prediction
+  tilde_d = dn + (1-alpha) * dt * vn;
+  
+  % correction
+  RIGHT = F - K * tilde_d;
+  vn = LEFT \ RIGHT;
+  dn = tilde_d + alpha * dt * vn;
+ 
+  disp = zeros(n_np, 1);
 
-  for ll = 1 : n_int
-    x_l = 0.0; y_l = 0.0; u_l = 0.0;
-    u_l_xi = 0.0; u_l_eta = 0.0;
-    dx_dxi = 0.0; dy_dxi = 0.0; dx_deta = 0.0; dy_deta = 0.0;
-    for aa = 1 : n_en
-      x_l = x_l + x_ele(aa) * Quad(aa, xi(ll), eta(ll));
-      y_l = y_l + y_ele(aa) * Quad(aa, xi(ll), eta(ll));
-      u_l = u_l + u_ele(aa) * Quad(aa, xi(ll), eta(ll));
-      [Na_xi, Na_eta] = Quad_grad(aa, xi(ll), eta(ll));
-      u_l_xi  = u_l_xi  + u_ele(aa) * Na_xi;
-      u_l_eta = u_l_eta + u_ele(aa) * Na_eta;
-      dx_dxi  = dx_dxi  + x_ele(aa) * Na_xi;
-      dx_deta = dx_deta + x_ele(aa) * Na_eta;
-      dy_dxi  = dy_dxi  + y_ele(aa) * Na_xi;
-      dy_deta = dy_deta + y_ele(aa) * Na_eta;
+  % insert the solution vector back with the g-data
+  for ii = 1 : n_np
+    index = ID(ii);
+    if index > 0
+      disp(ii) = dn(index);
     end
-    detJ = dx_dxi * dy_deta - dx_deta * dy_dxi;
-
-    u_l_x = (u_l_xi * dy_deta - u_l_eta * dy_dxi) / detJ;
-    u_l_y = (u_l_xi * (-dx_deta) + u_l_eta * dx_dxi) / detJ;
-
-    errorL2 = errorL2 + weight(ll) * detJ * (u_l - exact(x_l, y_l))^2;
-    errorH1 = errorH1 + weight(ll) * detJ *...
-      (( u_l_x- exact_x(x_l,y_l))^2 + ( u_l_y - exact_y(x_l,y_l))^2);
-    bottomL2 = bottomL2 + weight(ll) * detJ * exact(x_l, y_l)^2;
-    bottomH1 = bottomH1 + weight(ll) * detJ * (exact_x(x_l,y_l)^2 + exact_y(x_l,y_l)^2);
   end
+  
+  % save the solution to file
+  save("HEAT"+int2str(1000000+n), "disp", "n_el_x", "n_el_y");
 end
-
-errorL2 = sqrt(errorL2) / sqrt(bottomL2);
-errorH1 = sqrt(errorH1) / sqrt(bottomH1);
 
 % EOF
